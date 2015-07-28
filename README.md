@@ -4,9 +4,10 @@ An open source P2P livestreaming module for synchronized playback in HTML5.
 **p2ptv** connects a [WebRTC](http://www.webrtc.org/) gateway to the browser to
 allow livestreaming of [WebM](http://www.webmproject.org/) using the WebRTC API 
 and the experimental [MSE](https://w3c.github.io/media-source/) API. Livestreams
-are transcoded to WebM and converted into the [WebM Byte Stream Format](https://w3c.github.io/media-source/webm-byte-stream-format.html) before being pushed into the P2P delivery network.
+are transcoded to WebM before being pushed into the P2P delivery network.
 
-This project is experimental and may be unstable. Feel free to [contribute](#contributing).
+This project is experimental, unstable, incomplete, and likely to change drastically between versions.
+The gateway currently delivers the transcoding using the [WebM Byte Stream Format](https://w3c.github.io/media-source/webm-byte-stream-format.html), but this is likely to change to DASH. Feel free to [contribute](#contributing).
 
 ## Supported browsers
 - Supports Chrome and Opera.
@@ -18,12 +19,13 @@ media.mediasource.webm.enabled = true
 media.mediasource.whitelist = false
 ```
 
-# Goals
+## Goals
 - **significantly** reduce the cost of livestreaming
 - **significantly** reduce video delivery bandwidth
 - reliable MSE usage across browsers
 - hybrid tree-mesh overlay network
-- mp4 support ([ISO BMFF Byte Stream Format](https://w3c.github.io/media-source/isobmff-byte-stream-format.html))
+- increase interest in VP8 and VP9
+- 720p and 1080p support
 
 ## Dependencies
 - python2
@@ -49,17 +51,41 @@ $ yum install python git pkgconfig openssl-devel ncurses-devel nss-devel expat-d
 $ npm install p2ptv --save-dev
 ```
 
+- You may need to [install FFmpeg] from source with --libvorbis and --libvpx flags.
+- You may need to [setup an RTMP server].
+- [OBS] has been extremely useful. 
+
 ## Usage
-To enable logging:
+With no logging:
 ```
-$ DEBUG=p2ptv,gateway,peer,push-pull-window node --harmony examples/example.js
+$ node examples/example.js
+```
+
+With verbose logging:
+```
+$ DEBUG=p2ptv,gateway,peer,push-pull-window,encoder,webm-byte-stream node examples/example.js
 ```
 
 ## Transcoding
-FFmpeg example goes here.
+There's no FFmpeg flag to force placement of a keyframe at the beginning of each cluster.
+Until this project switches to DASH, just set -cluster_size_limit and -cluster_time_limit 
+to 999999999 or some value that's greater than your expected media segments. It's ugly, but it works.
+
+From RTMP (with upstream port set to 9001):
+```
+ffmpeg -re -i rtmp://localhost:1935/360p/test -c:a libvorbis -c:v libvpx -g 150 -crf 23 -lag-in-frames 15 \
+-profile:v 2 -qmax 50 -qmin 1 -cpu-used 0 -slices 4 -b:v 1M -cluster_size_limit 999999999 -cluster_time_limit \
+999999999 -deadline realtime -f webm tcp://localhost:9001;
+```
+
+From a file (only useful for testing that p2ptv is setup correctly):
+```
+
+```
 
 ## License
 MIT
 
 ## Contributing
-There's lots of work to be done. Feel free to create an [issue](https://github.com/siphontv/webm-byte-stream/issues) or pull request.
+Feel free to create an [issue](https://github.com/siphontv/p2ptv/issues) or pull request.
+Could always use some feedback from FFmpeg wizards.
