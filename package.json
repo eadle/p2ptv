@@ -1,0 +1,38 @@
+{
+  "name": "p2ptv",
+  "version": "0.0.0",
+  "description": "HTML5 livestreaming",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },  
+  "scripts": {
+    "test": "mocha test/"
+  },
+  "keywords": [
+    "mkv",
+    "webm",
+    "matroska",
+    "livestream",
+    "webrtc",
+    "html5",
+    "p2p",
+    "mse",
+    "tv"
+  ],
+  "dependencies": {
+    "webm-byte-stream": "0.0.1",
+    "debug": "^2.2.0",
+    "ws": "^0.7.2"
+  },
+  "author": "Ed Markowski <siphon@protonmail.com>",
+  "issues": "https://github.com/siphontv/p2ptv/issues",
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "^2.2.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/siphontv/p2ptv.git"
+  }
+}

@@ -1,5 +1,3 @@
-# Waiting to publish...
-
 [![NPM](https://nodei.co/npm/p2ptv.png?downloads=true&stars=true)](https://nodei.co/npm/p2ptv/)
 
 # p2ptv
@@ -50,8 +48,10 @@ $ yum install python git pkgconfig openssl-devel ncurses-devel nss-devel expat-d
 ```
 
 ## Install
+Until node-webrtc build error has been corrected:
 ```
 $ npm install p2ptv --save-dev
+$ ./install.sh
 ```
 
 - You may need to [install FFmpeg](https://trac.ffmpeg.org/wiki/CompilationGuide) from source with --libvorbis and --libvpx flags.
@@ -76,21 +76,25 @@ to 999999999 or some value that's greater than your expected media segments. It'
 
 From RTMP (with upstream port set to 9001):
 ```
-ffmpeg -re -i rtmp://localhost:1935/360p/test -c:a libvorbis -c:v libvpx -g 150 -crf 23 -lag-in-frames 15 \
--profile:v 2 -qmax 50 -qmin 1 -cpu-used 0 -slices 4 -b:v 1M -cluster_size_limit 999999999 -cluster_time_limit \
+ffmpeg -re -i rtmp://localhost:1935/480p/test -c:a libvorbis -c:v libvpx -g 150 -crf 23 -lag-in-frames 15 \
+-profile:v 2 -qmax 50 -qmin 1 -cpu-used 0 -slices 4 -b:v 2M -cluster_size_limit 999999999 -cluster_time_limit \
 999999999 -deadline realtime -f webm tcp://localhost:9001;
 ```
 
 From a file (only useful for testing that p2ptv is setup correctly):
 ```
-ffmpeg -i media/fractal.mp4 -c:a libvorbis -c:v libvpx -g 125 -crf 20 -lag-in-frames 15 -profile:v 0 -qmax 50 \
--qmin 1 -cpu-used 0 -slices 4 -b:v 1M -cluster_size_limit 999999999 -cluster_time_limit 999999999 -deadline \
+ffmpeg -i media/fractal.mp4 -c:a libvorbis -c:v libvpx -g 125 -crf 20 -lag-in-frames 15 -profile:v 2 -qmax 50 \
+-qmin 1 -cpu-used 0 -slices 4 -b:v 2M -cluster_size_limit 999999999 -cluster_time_limit 999999999 -deadline \
 realtime -f webm tcp://localhost:9001
 ```
+
+Could always use some feedback from FFmpeg wizards.
 
 ## License
 MIT
 
 ## Contributing
+This is a prototype that I'm putting into the wild. You're going to encounter bugs and issues.
 Feel free to create an [issue](https://github.com/siphontv/p2ptv/issues) or pull request.
-Could always use some feedback from FFmpeg wizards.
+
+Happy hacking.

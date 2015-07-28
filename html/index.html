@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<head>
+	<meta charset='utf-8'>
+	<title>P2PTV</title>
+	<style>
+		body {
+			background-color: #1D1F21;
+		}   
+		video {
+			margin: 0;
+			padding: 0;
+			display: block;
+			position: absolute;
+		}   
+	</style>
+</head>
+
+  <body>
+	  <video id="p2ptv-player" controls></video>
+  </body>
+
+  <!-- prototype P2PTV API -->
+	<script src="js/adapter.js"></script>
+	<script src="js/video.js"></script>
+	<script src="js/peer.js"></script>
+	<script src="js/p2ptv.js"></script>
+
+  <script>
+    'use strict';
+
+    var p2ptv = new P2PTV({
+      server: 'ws://' + window.location.hostname + ':8188',
+      video: 'p2ptv-player'
+    });
+  </script>
+
+</html>
