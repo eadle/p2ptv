@@ -1,3 +1,7 @@
+# Waiting to publish...
+
+[![NPM](https://nodei.co/npm/p2ptv.png?downloads=true&stars=true)](https://nodei.co/npm/p2ptv/)
+
 # p2ptv
 An open source P2P livestreaming module for synchronized playback in HTML5.
 
