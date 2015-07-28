@@ -7,7 +7,7 @@ and the experimental [MSE](https://w3c.github.io/media-source/) API. Livestreams
 are transcoded to WebM before being pushed into the P2P delivery network.
 
 This project is experimental, unstable, incomplete, and likely to change drastically between versions.
-The gateway currently delivers the transcoding using the [WebM Byte Stream Format](https://w3c.github.io/media-source/webm-byte-stream-format.html), but this is likely to change to DASH. Feel free to [contribute](#contributing).
+The gateway currently delivers the transcoding by sending the [WebM Byte Stream Format](https://w3c.github.io/media-source/webm-byte-stream-format.html) directly via the data channel, but this is likely to change to DASH. Feel free to [contribute](#contributing).
 
 ## Supported browsers
 - Supports Chrome and Opera.
@@ -24,7 +24,6 @@ media.mediasource.whitelist = false
 - **significantly** reduce video delivery bandwidth
 - reliable MSE usage across browsers
 - hybrid tree-mesh overlay network
-- increase interest in VP8 and VP9
 - 720p and 1080p support
 
 ## Dependencies
@@ -51,9 +50,9 @@ $ yum install python git pkgconfig openssl-devel ncurses-devel nss-devel expat-d
 $ npm install p2ptv --save-dev
 ```
 
-- You may need to [install FFmpeg] from source with --libvorbis and --libvpx flags.
-- You may need to [setup an RTMP server].
-- [OBS] has been extremely useful. 
+- You may need to [install FFmpeg](https://trac.ffmpeg.org/wiki/CompilationGuide) from source with --libvorbis and --libvpx flags.
+- You may need to [setup an RTMP server](https://obsproject.com/forum/resources/how-to-set-up-your-own-private-rtmp-server-using-nginx.50/).
+- [OBS](https://obsproject.com/download#linux) has been extremely useful. 
 
 ## Usage
 With no logging:
@@ -80,7 +79,9 @@ ffmpeg -re -i rtmp://localhost:1935/360p/test -c:a libvorbis -c:v libvpx -g 150 
 
 From a file (only useful for testing that p2ptv is setup correctly):
 ```
-
+ffmpeg -i media/fractal.mp4 -c:a libvorbis -c:v libvpx -g 125 -crf 20 -lag-in-frames 15 -profile:v 0 -qmax 50 \
+-qmin 1 -cpu-used 0 -slices 4 -b:v 1M -cluster_size_limit 999999999 -cluster_time_limit 999999999 -deadline \
+realtime -f webm tcp://localhost:9001
 ```
 
 ## License
