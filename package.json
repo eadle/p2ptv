@@ -33,6 +33,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/siphontv/p2ptv.git"
+    "url": "git://github.com/siphontv/p2ptv.git"
   }
 }
