@@ -26,10 +26,12 @@
     "ws": "^0.7.2"
   },
   "author": "Ed Markowski <siphon@protonmail.com>",
-  "issues": "https://github.com/siphontv/p2ptv/issues",
   "license": "MIT",
   "devDependencies": {
     "mocha": "^2.2.5"
+  },
+  "bugs": {
+    "url": "https://github.com/siphontv/p2ptv/issues"
   },
   "repository": {
     "type": "git",

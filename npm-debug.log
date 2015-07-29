@@ -1,0 +1,231 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/local/bin/node', '/usr/local/bin/npm', 'publish' ]
+2 info using npm@2.11.2
+3 info using node@v0.12.5
+4 verbose publish [ '.' ]
+5 silly cache add args [ '.', null ]
+6 verbose cache add spec .
+7 silly cache add parsed spec { raw: '.',
+7 silly cache add   scope: null,
+7 silly cache add   name: null,
+7 silly cache add   rawSpec: '.',
+7 silly cache add   spec: '/root/programming/node/p2ptv',
+7 silly cache add   type: 'directory' }
+8 verbose addLocalDirectory /root/.npm/p2ptv/0.0.1/package.tgz not in flight; packing
+9 verbose tar pack [ '/root/.npm/p2ptv/0.0.1/package.tgz',
+9 verbose tar pack   '/root/programming/node/p2ptv' ]
+10 verbose tarball /root/.npm/p2ptv/0.0.1/package.tgz
+11 verbose folder /root/programming/node/p2ptv
+12 info prepublish p2ptv@0.0.1
+13 verbose addLocalTarball adding from inside cache /root/.npm/p2ptv/0.0.1/package.tgz
+14 silly cache afterAdd p2ptv@0.0.1
+15 verbose afterAdd /root/.npm/p2ptv/0.0.1/package/package.json not in flight; writing
+16 verbose afterAdd /root/.npm/p2ptv/0.0.1/package/package.json written
+17 silly publish { name: 'p2ptv',
+17 silly publish   version: '0.0.1',
+17 silly publish   description: 'HTML5 livestreaming',
+17 silly publish   main: 'index.js',
+17 silly publish   directories: { test: 'test' },
+17 silly publish   scripts: { test: 'mocha test/' },
+17 silly publish   keywords:
+17 silly publish    [ 'mkv',
+17 silly publish      'webm',
+17 silly publish      'matroska',
+17 silly publish      'livestream',
+17 silly publish      'webrtc',
+17 silly publish      'html5',
+17 silly publish      'p2p',
+17 silly publish      'mse',
+17 silly publish      'tv' ],
+17 silly publish   dependencies: { 'webm-byte-stream': '0.0.1', debug: '^2.2.0', ws: '^0.7.2' },
+17 silly publish   author: { name: 'Ed Markowski', email: 'siphon@protonmail.com' },
+17 silly publish   issues: 'https://github.com/siphontv/p2ptv/issues',
+17 silly publish   license: 'MIT',
+17 silly publish   devDependencies: { mocha: '^2.2.5' },
+17 silly publish   repository: { type: 'git', url: 'git://github.com/siphontv/p2ptv.git' },
+17 silly publish   readme: '[![NPM](https://nodei.co/npm/p2ptv.png?downloads=true&stars=true)](https://nodei.co/npm/p2ptv/)\n\n# p2ptv\nAn open source P2P livestreaming module for synchronized playback in HTML5.\n\n**p2ptv** connects a [WebRTC](http://www.webrtc.org/) gateway to the browser to\nallow livestreaming of [WebM](http://www.webmproject.org/) using the WebRTC API \nand the experimental [MSE](https://w3c.github.io/media-source/) API. Livestreams\nare transcoded to WebM before being pushed into the P2P delivery network.\n\nThis project is experimental, unstable, incomplete, and likely to change drastically between versions.\nThe gateway currently delivers the transcoding by sending the [WebM Byte Stream Format](https://w3c.github.io/media-source/webm-byte-stream-format.html) directly via the data channel, but this is likely to change to DASH. Feel free to [contribute](#contributing).\n\n## Supported browsers\n- Supports Chrome and Opera.\n\nFirefox has an incomplete implementation of MSE. You have to modify flags in about:config.\n```\nmedia.mediasource.enabled = true\nmedia.mediasource.webm.enabled = true\nmedia.mediasource.whitelist = false\n```\n\n## Goals\n- **significantly** reduce the cost of livestreaming\n- **significantly** reduce video delivery bandwidth\n- reliable MSE usage across browsers\n- hybrid tree-mesh overlay network\n- 720p and 1080p support\n\n## Dependencies\n- python2\n- git \n- pkg-config\n- libncurses-devel\n- libssl-devel\n- libnss-devel\n- libexpat-devel\n\nDebian/Ubuntu:\n```\n$ apt-get install python2.7 git-all pkg-config libncurses5-dev libssl-dev libnss3-dev libexpat-dev\n```\n\nCentOS/Fedora/RHEL:\n```\n$ yum install python git pkgconfig openssl-devel ncurses-devel nss-devel expat-devel\n```\n\n## Install\nUntil node-webrtc build error has been corrected:\n```\n$ npm install p2ptv --save-dev\n$ cd node_modules/p2ptv && install.sh\n```\n\n- You may need to [install FFmpeg](https://trac.ffmpeg.org/wiki/CompilationGuide) from source with --libvorbis and --libvpx flags.\n- You may need to [setup an RTMP server](https://obsproject.com/forum/resources/how-to-set-up-your-own-private-rtmp-server-using-nginx.50/).\n- [OBS](https://obsproject.com/download#linux) has been extremely useful. \n\n## Usage\nWith no logging:\n```\n$ node examples/example.js\n```\n\nWith verbose logging:\n```\n$ DEBUG=p2ptv,gateway,peer,push-pull-window,encoder,webm-byte-stream node examples/example.js\n```\n\n## Transcoding\nThere\'s no FFmpeg flag to force placement of a keyframe at the beginning of each cluster.\nUntil this project switches to DASH, just set -cluster_size_limit and -cluster_time_limit \nto 999999999 or some value that\'s greater than your expected media segments. It\'s ugly, but it works.\n\nFrom RTMP (with upstream port set to 9001):\n```\nffmpeg -re -i rtmp://localhost:1935/480p/test -c:a libvorbis -c:v libvpx -g 150 -crf 23 -lag-in-frames 15 \\\n-profile:v 2 -qmax 50 -qmin 1 -cpu-used 0 -slices 4 -b:v 2M -cluster_size_limit 999999999 -cluster_time_limit \\\n999999999 -deadline realtime -f webm tcp://localhost:9001;\n```\n\nFrom a file (only useful for testing that p2ptv is setup correctly):\n```\nffmpeg -i media/fractal.mp4 -c:a libvorbis -c:v libvpx -g 125 -crf 20 -lag-in-frames 15 -profile:v 2 -qmax 50 \\\n-qmin 1 -cpu-used 0 -slices 4 -b:v 2M -cluster_size_limit 999999999 -cluster_time_limit 999999999 -deadline \\\nrealtime -f webm tcp://localhost:9001\n```\n\nCould always use some feedback from FFmpeg wizards.\n\n## License\nMIT\n\n## Contributing\nThis is a prototype that I\'m putting into the wild. You\'re going to encounter bugs and issues.\nFeel free to create an [issue](https://github.com/siphontv/p2ptv/issues) or pull request.\n\nHappy hacking.\n',
+17 silly publish   readmeFilename: 'README.md',
+17 silly publish   gitHead: '7bebbeac8b2d6599d50817cd9d1d079aa7d628fc',
+17 silly publish   bugs: { url: 'https://github.com/siphontv/p2ptv/issues' },
+17 silly publish   homepage: 'https://github.com/siphontv/p2ptv#readme',
+17 silly publish   _id: 'p2ptv@0.0.1',
+17 silly publish   _shasum: 'da41db0bd36c5b05efb2ac802f791e15a4d65005',
+17 silly publish   _from: '.' }
+18 verbose getPublishConfig undefined
+19 silly mapToRegistry name p2ptv
+20 silly mapToRegistry using default registry
+21 silly mapToRegistry registry https://registry.npmjs.org/
+22 silly mapToRegistry uri https://registry.npmjs.org/p2ptv
+23 verbose publish registryBase https://registry.npmjs.org/
+24 silly publish uploading /root/.npm/p2ptv/0.0.1/package.tgz
+25 verbose request uri https://registry.npmjs.org/p2ptv
+26 verbose request sending authorization for write operation
+27 info attempt registry request try #1 at 5:47:18 PM
+28 verbose request using bearer token for auth
+29 verbose request id d2e420ca51b3b883
+30 http request PUT https://registry.npmjs.org/p2ptv
+31 http 503 https://registry.npmjs.org/p2ptv
+32 verbose bad json <?xml version="1.0" encoding="utf-8"?>
+32 verbose bad json <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+32 verbose bad json  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+32 verbose bad json <html>
+32 verbose bad json   <head>
+32 verbose bad json     <title>503 backend read error</title>
+32 verbose bad json   </head>
+32 verbose bad json   <body>
+32 verbose bad json     <h1>Error 503 backend read error</h1>
+32 verbose bad json     <p>backend read error</p>
+32 verbose bad json     <h3>Guru Mediation:</h3>
+32 verbose bad json     <p>Details: cache-lax1435-LAX 1438130945 1353779796</p>
+32 verbose bad json     <hr>
+32 verbose bad json     <p>Varnish cache server</p>
+32 verbose bad json   </body>
+32 verbose bad json </html>
+33 error registry error parsing json
+34 info retry will retry, error on last attempt: SyntaxError: Unexpected token <
+34 info retry
+34 info retry <?xml version="1.0" encoding="utf-8"?>
+34 info retry <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+34 info retry  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+34 info retry <html>
+34 info retry   <head>
+34 info retry     <title>503 backend read error</title>
+34 info retry   </head>
+34 info retry   <body>
+34 info retry     <h1>Error 503 backend read error</h1>
+34 info retry     <p>backend read error</p>
+34 info retry     <h3>Guru Mediation:</h3>
+34 info retry     <p>Details: cache-lax1435-LAX 1438130945 1353779796</p>
+34 info retry     <hr>
+34 info retry     <p>Varnish cache server</p>
+34 info retry   </body>
+34 info retry </html>
+35 info attempt registry request try #2 at 5:49:24 PM
+36 verbose request using bearer token for auth
+37 http request PUT https://registry.npmjs.org/p2ptv
+38 http 503 https://registry.npmjs.org/p2ptv
+39 verbose bad json <?xml version="1.0" encoding="utf-8"?>
+39 verbose bad json <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+39 verbose bad json  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+39 verbose bad json <html>
+39 verbose bad json   <head>
+39 verbose bad json     <title>503 backend read error</title>
+39 verbose bad json   </head>
+39 verbose bad json   <body>
+39 verbose bad json     <h1>Error 503 backend read error</h1>
+39 verbose bad json     <p>backend read error</p>
+39 verbose bad json     <h3>Guru Mediation:</h3>
+39 verbose bad json     <p>Details: cache-lax1434-LAX 1438131070 1382431188</p>
+39 verbose bad json     <hr>
+39 verbose bad json     <p>Varnish cache server</p>
+39 verbose bad json   </body>
+39 verbose bad json </html>
+40 error registry error parsing json
+41 info retry will retry, error on last attempt: SyntaxError: Unexpected token <
+41 info retry
+41 info retry <?xml version="1.0" encoding="utf-8"?>
+41 info retry <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+41 info retry  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+41 info retry <html>
+41 info retry   <head>
+41 info retry     <title>503 backend read error</title>
+41 info retry   </head>
+41 info retry   <body>
+41 info retry     <h1>Error 503 backend read error</h1>
+41 info retry     <p>backend read error</p>
+41 info retry     <h3>Guru Mediation:</h3>
+41 info retry     <p>Details: cache-lax1434-LAX 1438131070 1382431188</p>
+41 info retry     <hr>
+41 info retry     <p>Varnish cache server</p>
+41 info retry   </body>
+41 info retry </html>
+42 info attempt registry request try #3 at 5:52:19 PM
+43 verbose request using bearer token for auth
+44 http request PUT https://registry.npmjs.org/p2ptv
+45 http 503 https://registry.npmjs.org/p2ptv
+46 verbose bad json <?xml version="1.0" encoding="utf-8"?>
+46 verbose bad json <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+46 verbose bad json  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+46 verbose bad json <html>
+46 verbose bad json   <head>
+46 verbose bad json     <title>503 backend read error</title>
+46 verbose bad json   </head>
+46 verbose bad json   <body>
+46 verbose bad json     <h1>Error 503 backend read error</h1>
+46 verbose bad json     <p>backend read error</p>
+46 verbose bad json     <h3>Guru Mediation:</h3>
+46 verbose bad json     <p>Details: cache-sjc3122-SJC 1438131246 1317226807</p>
+46 verbose bad json     <hr>
+46 verbose bad json     <p>Varnish cache server</p>
+46 verbose bad json   </body>
+46 verbose bad json </html>
+47 error registry error parsing json
+48 verbose headers { server: 'Varnish',
+48 verbose headers   'retry-after': '0',
+48 verbose headers   'content-type': 'text/html; charset=utf-8',
+48 verbose headers   'content-length': '448',
+48 verbose headers   'accept-ranges': 'bytes',
+48 verbose headers   date: 'Wed, 29 Jul 2015 00:54:06 GMT',
+48 verbose headers   via: '1.1 varnish',
+48 verbose headers   connection: 'close',
+48 verbose headers   'x-served-by': 'cache-sjc3122-SJC',
+48 verbose headers   'x-cache': 'MISS',
+48 verbose headers   'x-cache-hits': '0',
+48 verbose headers   'x-timer': 'S1438131136.717243,VS0,VE109664' }
+49 verbose request invalidating /root/.npm/registry.npmjs.org/p2ptv on PUT
+50 error publish Failed PUT 503
+51 verbose stack SyntaxError: Unexpected token <
+51 verbose stack
+51 verbose stack <?xml version="1.0" encoding="utf-8"?>
+51 verbose stack <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+51 verbose stack  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+51 verbose stack <html>
+51 verbose stack   <head>
+51 verbose stack     <title>503 backend read error</title>
+51 verbose stack   </head>
+51 verbose stack   <body>
+51 verbose stack     <h1>Error 503 backend read error</h1>
+51 verbose stack     <p>backend read error</p>
+51 verbose stack     <h3>Guru Mediation:</h3>
+51 verbose stack     <p>Details: cache-sjc3122-SJC 1438131246 1317226807</p>
+51 verbose stack     <hr>
+51 verbose stack     <p>Varnish cache server</p>
+51 verbose stack   </body>
+51 verbose stack </html>
+51 verbose stack
+51 verbose stack     at Object.parse (native)
+51 verbose stack     at CachingRegistryClient.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/npm-registry-client/lib/request.js:197:23)
+51 verbose stack     at Request._callback (/usr/local/lib/node_modules/npm/node_modules/npm-registry-client/lib/request.js:170:14)
+51 verbose stack     at Request.self.callback (/usr/local/lib/node_modules/npm/node_modules/request/request.js:354:22)
+51 verbose stack     at Request.emit (events.js:110:17)
+51 verbose stack     at Request.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/request/request.js:1207:14)
+51 verbose stack     at Request.emit (events.js:129:20)
+51 verbose stack     at IncomingMessage.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/request/request.js:1153:12)
+51 verbose stack     at IncomingMessage.emit (events.js:129:20)
+51 verbose stack     at _stream_readable.js:908:16
+52 verbose cwd /root/programming/node/p2ptv
+53 error Linux 3.16.0-4-amd64
+54 error argv "/usr/local/bin/node" "/usr/local/bin/npm" "publish"
+55 error node v0.12.5
+56 error npm  v2.11.2
+57 error Unexpected token <
+57 error
+57 error <?xml version="1.0" encoding="utf-8"?>
+57 error <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+57 error  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+57 error <html>
+57 error   <head>
+57 error     <title>503 backend read error</title>
+57 error   </head>
+57 error   <body>
+57 error     <h1>Error 503 backend read error</h1>
+57 error     <p>backend read error</p>
+57 error     <h3>Guru Mediation:</h3>
+57 error     <p>Details: cache-sjc3122-SJC 1438131246 1317226807</p>
+57 error     <hr>
+57 error     <p>Varnish cache server</p>
+57 error   </body>
+57 error </html>
+58 error If you need help, you may report this error at:
+58 error     <https://github.com/npm/npm/issues>
+59 verbose exit [ 1, true ]
