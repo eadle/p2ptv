@@ -1,6 +1,6 @@
 {
   "name": "p2ptv",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "HTML5 livestreaming",
   "main": "index.js",
   "directories": {
