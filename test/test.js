@@ -7,21 +7,66 @@ var P2PTV = require('../lib/p2ptv.js'),
 
 describe('p2ptv', function() {
   describe('P2PTV', function() {
-    // TODO
+    it('should throw for invalid signaling port', function() {
+      assert.throws(function() {
+        new P2PTV({signaling: -1});
+      }, /Signaling port/);
+    });
+    it('should throw for invalid upstream port', function() {
+      assert.throws(function() {
+        new P2PTV({upstream: 999});
+      }, /Upstream port/);
+    });
+    it('should throw for invalid bitrate', function() {
+      assert.throws(function() {
+        new P2PTV({bitrate: '480p'});
+      }, /Bitrate/);
+    });
+    it('should throw for invalid durations', function() {
+      assert.throws(function() {
+      new P2PTV({durations: 'what?'});
+      }, /durations/);
+    });
   });
 });
 
 describe('gateway', function() {
   describe('Gateway', function() {
-    // TODO
+    it('should throw for invalid id', function() {
+      assert.throws(function() {
+        new Gateway({id: 1902309});
+      }, /string as id/);
+    });
+    it('should throw for invalid upstream port', function() {
+      assert.throws(function() {
+        new Gateway({id: 'bogusid', port: 999});
+      }, /port number/);
+    });
+    it('should throw for invalid bitrate', function() {
+      assert.throws(function() {
+        new Gateway({id: 'bogusid', bitrate: -1});
+      }, /bitrate greater than 0/);
+    });
+    it('should throw for invalid durations', function() {
+      assert.throws(function() {
+        new Gateway({id: 'bogusid', durations: 'what?'});
+      }, /durations/);
+    });
   });
 });
 
 describe('peer', function() {
   describe('Peer', function() {
-
-    // TODO
-    
+    it('should throw for invalid id', function() {
+      assert.throws(function() {
+        new Peer(1902309);
+      }, /id of type string/);
+    });
+    it('should throw for invalid WebSocket Object', function() {
+      assert.throws(function() {
+        new Peer('bogusid');
+      }, /valid WebSocket/);
+    });
   });
 });
 
