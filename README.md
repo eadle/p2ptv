@@ -48,10 +48,8 @@ $ yum install python git pkgconfig openssl-devel ncurses-devel nss-devel expat-d
 ```
 
 ## Install
-Until node-webrtc build error has been corrected:
 ```
-$ npm install p2ptv --save-dev
-$ cd node_modules/p2ptv && install.sh
+$ npm install p2ptv --save
 ```
 
 - You may need to [install FFmpeg](https://trac.ffmpeg.org/wiki/CompilationGuide) from source with --libvorbis and --libvpx flags.
