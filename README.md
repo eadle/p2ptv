@@ -92,7 +92,9 @@ Could always use some feedback from FFmpeg wizards.
 MIT
 
 ## Contributing
-This is a prototype that I'm putting into the wild. You're going to encounter bugs and issues.
-Feel free to create an [issue](https://github.com/siphontv/p2ptv/issues) or pull request.
+Don't expect to start a webservice using this in it's current state. The P2P delivery architecture has not
+been implemented. This is where the man hours are needed. If you are interested in experimenting with p2ptv,
+be prepared to encounter bugs and issues. Please familiarize yourself with WebRTC before contributing.
 
-Happy hacking.
+Feel free to create an [issue](https://github.com/siphontv/p2ptv/issues), pull request, fork the project,
+use the idea, or straight up copy-paste code.
