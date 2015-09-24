@@ -23,7 +23,6 @@
   "dependencies": {
     "debug": "^2.2.0",
     "webm-byte-stream": "0.0.1",
-    "wrtc": "0.0.57",
     "ws": "^0.7.2"
   },
   "author": "Ed Markowski <siphon@protonmail.com>",
