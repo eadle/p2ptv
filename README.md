@@ -33,7 +33,7 @@ media.mediasource.whitelist = false
 $ npm install p2ptv
 ```
 
-- You may need to [install FFmpeg](https://trac.ffmpeg.org/wiki/CompilationGuide) from source with --libvorbis and --libvpx flags.
+- You may need to [install FFmpeg](https://trac.ffmpeg.org/wiki/CompilationGuide) from source with --enable-libvorbis and --enable-libvpx flags.
 - You may need to [setup an RTMP server](https://obsproject.com/forum/resources/how-to-set-up-your-own-private-rtmp-server-using-nginx.50/).
 - [OBS](https://obsproject.com/download#linux) has been extremely useful. 
 
@@ -60,12 +60,16 @@ ffmpeg -re -i rtmp://localhost:1935/480p/test -c:a libvorbis -c:v libvpx -g 150 
 999999999 -deadline realtime -f webm tcp://localhost:9001;
 ```
 
-From a file (only useful for testing that p2ptv is setup correctly):
+From a file:
 ```
 ffmpeg -i media/fractal.mp4 -c:a libvorbis -c:v libvpx -g 125 -crf 20 -lag-in-frames 15 -profile:v 2 -qmax 50 \
 -qmin 1 -cpu-used 0 -slices 4 -b:v 2M -cluster_size_limit 999999999 -cluster_time_limit 999999999 -deadline \
 realtime -f webm tcp://localhost:9001
 ```
+
+You may have better results transcoding from RTMP. It really depends on how
+much processing power you're willing to give your transcoding box.
+
 ## License
 MIT
 
