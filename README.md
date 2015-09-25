@@ -3,13 +3,20 @@
 # p2ptv
 An open source P2P livestreaming module for synchronized playback in HTML5.
 
-**p2ptv** connects a [WebRTC](http://www.webrtc.org/) gateway to the browser to
-allow livestreaming of [WebM](http://www.webmproject.org/) using the WebRTC API 
-and the experimental [MSE](https://w3c.github.io/media-source/) API. Livestreams
-are transcoded to WebM before being pushed into the P2P delivery network.
+**p2ptv** distributes live [WebM](http://www.webmproject.org/) by sending
+the [WebM Byte Stream Format](https://w3c.github.io/media-source/webm-byte-stream-format.html) directly to the browser where the experimental [MSE](https://w3c.github.io/media-source/) is used for playback. Livestreams are
+transcoded from the RTMP protocol or from a file before being processed by
+p2ptv.
 
-This project is experimental, unstable, incomplete, and likely to change drastically between versions.
-The gateway currently delivers the transcoding by sending the [WebM Byte Stream Format](https://w3c.github.io/media-source/webm-byte-stream-format.html) directly via the data channel, but this is likely to change to DASH. Feel free to [contribute](#contributing).
+The plan is to **signicantly** reduce the cost of livestreaming by forming
+a P2P distribution network using WebRTC. Right now, it is working only as
+a client-server architecture. If you're interested in starting a webservice,
+it is probably in your best interest to use conventional streaming methods. 
+
+Please note that this is alpha software. Meaning it is experimental,
+unstable, incomplete, and likely to change drastically between versions.
+Feel free to [contribute](#contributing) if you are interested in the
+project.
 
 ## Supported browsers
 - Supports Chrome and Opera.
@@ -21,35 +28,9 @@ media.mediasource.webm.enabled = true
 media.mediasource.whitelist = false
 ```
 
-## Goals
-- **significantly** reduce the cost of livestreaming
-- **significantly** reduce video delivery bandwidth
-- reliable MSE usage across browsers
-- hybrid tree-mesh overlay network
-- 720p and 1080p support
-
-## Dependencies
-- python2
-- git 
-- pkg-config
-- libncurses-devel
-- libssl-devel
-- libnss-devel
-- libexpat-devel
-
-Debian/Ubuntu:
-```
-$ apt-get install python2.7 git-all pkg-config libncurses5-dev libssl-dev libnss3-dev libexpat-dev
-```
-
-CentOS/Fedora/RHEL:
-```
-$ yum install python git pkgconfig openssl-devel ncurses-devel nss-devel expat-devel
-```
-
 ## Install
 ```
-$ npm install p2ptv --save
+$ npm install p2ptv
 ```
 
 - You may need to [install FFmpeg](https://trac.ffmpeg.org/wiki/CompilationGuide) from source with --libvorbis and --libvpx flags.
@@ -64,7 +45,7 @@ $ node examples/example.js
 
 With verbose logging:
 ```
-$ DEBUG=p2ptv,gateway,peer,push-pull-window,encoder,webm-byte-stream node examples/example.js
+$ DEBUG=p2ptv,gateway,peer,push-pull-window,encoder node examples/example.js
 ```
 
 ## Transcoding
@@ -85,16 +66,11 @@ ffmpeg -i media/fractal.mp4 -c:a libvorbis -c:v libvpx -g 125 -crf 20 -lag-in-fr
 -qmin 1 -cpu-used 0 -slices 4 -b:v 2M -cluster_size_limit 999999999 -cluster_time_limit 999999999 -deadline \
 realtime -f webm tcp://localhost:9001
 ```
-
-Could always use some feedback from FFmpeg wizards.
-
 ## License
 MIT
 
 ## Contributing
-Don't expect to start a webservice using this in it's current state. The P2P delivery architecture has not
-been implemented. This is where the man hours are needed. If you are interested in experimenting with p2ptv,
-be prepared to encounter bugs and issues. Please familiarize yourself with WebRTC before contributing.
+Feel free to create an [issue](https://github.com/siphontv/p2ptv/issues) or
+pull request.
 
-Feel free to create an [issue](https://github.com/siphontv/p2ptv/issues), pull request, fork the project,
-use the idea, or straight up copy-paste code.
+Could always use some feedback from FFmpeg wizards.
