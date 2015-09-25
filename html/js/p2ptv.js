@@ -41,6 +41,7 @@ function P2PTV(options) {
 P2PTV.prototype._setupServerConnection = function(server) {
   var self = this;
   self._ws = new WebSocket(server);
+  self._ws.binaryType = 'arraybuffer';
 
   self._ws.onopen = function() {
     trace('connected to server');
@@ -58,6 +59,12 @@ P2PTV.prototype._setupServerConnection = function(server) {
     var data = event.data;
 
     if (data instanceof ArrayBuffer) {
+/*
+      var float64view = new Float64Array(data);
+      var timecode = float64view[0];
+      trace('received arraybuffer: timecode=' + timecode + ', byteLength='
+        + data.byteLength);
+*/
       self._pushData(data);
       return;
     }
