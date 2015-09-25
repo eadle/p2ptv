@@ -5,8 +5,7 @@ An open source P2P livestreaming module for synchronized playback in HTML5.
 
 **p2ptv** distributes live [WebM](http://www.webmproject.org/) by sending
 the [WebM Byte Stream Format](https://w3c.github.io/media-source/webm-byte-stream-format.html) directly to the browser where the experimental [MSE](https://w3c.github.io/media-source/) is used for playback. Livestreams are
-transcoded from the RTMP protocol or from a file before being processed by
-p2ptv.
+transcoded from RTMP or from a file before being processed by this module.
 
 The plan is to **signicantly** reduce the cost of livestreaming by forming
 a P2P distribution network using WebRTC. Right now, it is working only as
