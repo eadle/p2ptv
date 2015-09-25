@@ -55,6 +55,13 @@ P2PTV.prototype._setupServerConnection = function(server) {
   };
 
   self._ws.onmessage = function(event) {
+    var data = event.data;
+
+    if (data instanceof ArrayBuffer) {
+      self._pushData(data);
+      return;
+    }
+
     var message = JSON.parse(event.data);
     trace('received message from ' + message.id + ': ' + event.data);
     switch (message.type) {

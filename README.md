@@ -37,7 +37,7 @@ $ npm install p2ptv
 - [OBS](https://obsproject.com/download#linux) has been extremely useful. 
 
 ## Usage
-With no logging:
+Without logging:
 ```
 $ node examples/example.js
 ```
