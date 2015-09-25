@@ -96,6 +96,7 @@ TempPlayer.prototype.addData = function(data) {
   var float64view = new Float64Array(data);
   var timecode = float64view[0];
   var uint8view = new Uint8Array(data, 8); 
+  var int32view = new Int32Array(data);
   var type = uint8view[0] >> 6;
   switch (type) {
     case 0:
@@ -112,7 +113,10 @@ TempPlayer.prototype.addData = function(data) {
       var lastIndex = uint8view[2];
       var chunkIndex = uint8view[1];
 
-      //trace('received a chunk (' + chunkIndex + ')');
+      var duration = int32view[3];
+      trace('received a chunk: chunkIndex=' + chunkIndex
+        + ', finalIndex=' + lastIndex + ', duration=' + duration + 'ms');
+
       // insert the cluster chunk into the cluster
       var cluster = self._clusters[timecode];
       if (!cluster) {
