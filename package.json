@@ -2,11 +2,14 @@
   "name": "p2ptv",
   "version": "0.2.0",
   "description": "HTML5 livestreaming",
+  "author": "Ed Markowski <siphon@protonmail.com>",
+  "license": "MIT",
   "main": "index.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
+    "prepublish": "grunt",
     "test": "mocha test/"
   },
   "keywords": [
@@ -22,12 +25,14 @@
   ],
   "dependencies": {
     "debug": "^2.2.0",
-    "webm-byte-stream": "0.0.1",
+    "webm-byte-stream": "0.0.2",
     "ws": "^0.7.2"
   },
-  "author": "Ed Markowski <siphon@protonmail.com>",
-  "license": "MIT",
   "devDependencies": {
+    "express": "^4.13.3",
+    "grunt": "^0.4.5",
+    "grunt-contrib-concat": "^0.5.1",
+    "grunt-contrib-uglify": "^0.9.2",
     "mocha": "^2.2.5"
   },
   "bugs": {

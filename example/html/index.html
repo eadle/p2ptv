@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<head>
+  <meta charset='utf-8'>
+  <title>p2ptv example</title>
+</head>
+
+  <body>
+    <div id='p2ptv-example'></div>
+  </body>
+
+  <script src="js/p2ptv.js"></script>
+  <script>
+    var stream = new P2PTV.Stream({
+      server: 'ws://' + window.location.hostname + ':8188',
+      parentElementId: 'p2ptv-example',
+      width: 854,
+      height: 480
+    });
+  </script>
+
+</html>

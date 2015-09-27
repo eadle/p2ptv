@@ -1,1 +1,1 @@
-module.exports = require('./lib/p2ptv.js');
+module.exports = require('./src/server/p2ptv.js');

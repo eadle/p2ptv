@@ -1,8 +1,13 @@
-var P2PTV = require('../index.js');
+var P2PTV = require('../index.js'),
+    express = require('express');
 
 var p2ptv = new P2PTV({
-  signaling: 8188,  // ws port
-  upstream: 9001,   // upstream port
-  bitrate: 2500,    // bitrate in Kbps 
-  durations: false
+  signaling: 8188,  // session management
+  upstream: 9001    // media upstream
+});
+
+var app = express();
+app.use('/', express.static(__dirname + '/html'));
+app.listen(3000, function() {
+  console.log('Listening on 3000')
 });
