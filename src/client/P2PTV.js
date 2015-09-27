@@ -2,7 +2,7 @@
 
 var P2PTV = P2PTV || {
 
-  VERSION: 'v0.2.0',
+  VERSION: 'v0.3.0',
   CHANNEL: 'p2ptvchannel',
   ICE_SERVERS: [{url: 'stun:stun.l.google.com:19302'}],
   PC_CONSTRAINTS: {optional: [{DtlsSrtpKeyAgreement: true}]},
