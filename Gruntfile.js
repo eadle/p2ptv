@@ -12,11 +12,9 @@ module.exports = function(grunt) {
           'src/client/Stream.js',
           'src/client/Player.js',
           'src/client/Peer.js',
-          'src/client/Encoder.js',
-          'src/client/Decoder.js',
           'src/client/InitSegment.js',
           'src/client/MediaSegment.js',
-          'src/client/Window.js',
+          'src/client/PushPullWindow.js',
         ],
         dest: 'build/<%= pkg.name %>.js',
       }

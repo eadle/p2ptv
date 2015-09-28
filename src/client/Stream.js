@@ -25,7 +25,7 @@ P2PTV.Stream = function(options) {
   self._streamId = P2PTV.generateStreamId();
   P2PTV.STREAMS[self._streamId] = self;
   // TODO implement P2PTV.Window
-  // self._window = new P2PTV.Window();
+  // self._window = new P2PTV.PushPullWindow(self);
   self._player = new P2PTV.Player(self._streamId, options);
   self._ws = null;
 
@@ -175,7 +175,8 @@ P2PTV.Stream.prototype = {
   _setupPeerConnection: function(peer) {
     var self = this;
     var peer = new Peer(self, pid, relation);
-    peer.pc = new RTCPeerConnection(P2PTV.ICE_SERVERS,P2PTV.PC_CONSTRAINTS);
+    peer.pc = new P2PTV.RTCPeerConnection(P2PTV.ICE_SERVERS,
+      P2PTV.PC_CONSTRAINTS);
     peer.pc.onicecandidate = function(event) {
       var candidate = event.candidate;
       if (candidate) {
@@ -239,7 +240,7 @@ P2PTV.Stream.prototype = {
    */
   _handleOffer: function(offer, peer) {
     var self = this;
-    var sdp = new RTCSessionDescription(offer);
+    var sdp = new P2PTV.RTCSessionDescription(offer);
     peer.pc.setRemoteDescription(sdp, function() {
       P2PTV.log('set remote offer description for: ' + peer.id);
       self._makeAnswer(peer);
@@ -254,7 +255,7 @@ P2PTV.Stream.prototype = {
    */
   _handleAnswer: function(answer, peer) {
     var self = this;
-    var sdp = new RTCSessionDescription(answer);
+    var sdp = new P2PTV.RTCSessionDescription(answer);
     peer.pc.setRemoteDescription(sdp, function() {
       P2PTV.log('set remote answer description for: ' + peer.id);
     }, self._traceErr);
