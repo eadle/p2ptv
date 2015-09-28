@@ -18,7 +18,7 @@ module.exports = function(grunt) {
           'src/client/MediaSegment.js',
           'src/client/Window.js',
         ],
-        dest: 'build/<%= pkg.name %>.js'
+        dest: 'build/<%= pkg.name %>.js',
       }
     },
     uglify: {
@@ -27,15 +27,23 @@ module.exports = function(grunt) {
       },
       build: {
         files: {
-          'build/<%= pkg.name %>.min.js': ['<%= concat.build.dest %>']
+          'build/<%= pkg.name %>.min.js': ['<%= concat.build.dest %>'],
         }
+      }
+    },
+    copy: {
+      main: {
+        src: '<%= concat.build.dest %>',
+        dest: 'example/html/js/<%= pkg.name %>.js'
       }
     }
   });
 
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-contrib-copy');
 
-  grunt.registerTask('default', ['concat', 'uglify']);
+  grunt.registerTask('default', ['concat', 'copy']);
+  grunt.registerTask('build', ['concat', 'uglify', 'copy']);
 
 };
