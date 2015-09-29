@@ -3,7 +3,8 @@ var P2PTV = require('../index.js'),
 
 var p2ptv = new P2PTV({
   signaling: 8188,  // session management
-  upstream: 9001    // media upstream
+  upstream: 9001,    // media upstream
+  durations: true
 });
 
 var app = express();

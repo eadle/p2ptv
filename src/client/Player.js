@@ -90,6 +90,16 @@ P2PTV.Player.prototype = {
 
   },
 
+  appendInitSegment: function(data) {
+    var self = this;
+    self._reader.readAsArrayBuffer(data);
+  },
+
+  appendMediaSegment: function(data) {
+    var self = this;
+    self._reader.readAsArrayBuffer(data);
+  },
+
   /**
    * TODO fill this out
    *

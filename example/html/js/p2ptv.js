@@ -238,16 +238,17 @@ P2PTV.Stream = function(options) {
     return null;
   }
 
+  self._streamId = P2PTV.generateStreamId();
+  P2PTV.STREAMS[self._streamId] = self;
+
   self._id = '';
   self._parents = {};
   self._children = {};
-  self._initialized = false;
-  self._streamId = P2PTV.generateStreamId();
-  P2PTV.STREAMS[self._streamId] = self;
-  // TODO implement P2PTV.Window
-  // self._window = new P2PTV.PushPullWindow(self);
+  self._pushPullWindow = new P2PTV.PushPullWindow(self);
   self._player = new P2PTV.Player(self._streamId, options);
   self._ws = null;
+
+  self._initialized = false;
 
   var server = options.server;
   if (typeof server !== 'string') {
@@ -376,8 +377,11 @@ P2PTV.Stream.prototype = {
    * data -
    */
   _pushData: function(data) {
-    // FIXME should be passing received data to the window
     var self = this;
+
+    // FIXME should be: data -> window -> player 
+    self._pushPullWindow.pushData(data); // testing
+
     self._player.addData(data);
     // broadcast data to children
     for (var key in self._children) {
@@ -824,7 +828,7 @@ P2PTV.PushPullWindow.prototype = {
    *        of 8 greater than or equal to 16.
    */
   pushData: function(data) {
-    this._decoder.decode(data);
+    this._decode(data);
   },
 
   _decode: function(data) {
@@ -839,20 +843,21 @@ P2PTV.PushPullWindow.prototype = {
     
     switch (type) {
       case P2PTV.INIT_SEGMENT:
-        var start = 9 + (0x07 & uint8view[0]);
-        self._pushPullWindow.pushInitSegment({
+        self._pushInitSegment({
           timecode: timecode,
-          data: data.slice(start)
+          start: 9 + (0x07 & uint8view[0]),
+          data: data
         }); 
         break;
       case P2PTV.MEDIA_SEGMENT_CHUNK:
-        var start = 16 + (0x07 & uint8view[0]);
+
         self._pushMediaSegmentChunk({
           timecode: timecode,
           chunkIndex: uint8view[1],
           finalIndex: uint8view[2],
           duration: int32view[3],
-          data: data.slice(start)
+          start: 16 + (0x07 & uint8view[0]),
+          data: data
         });
         break;
       /*
@@ -871,8 +876,19 @@ P2PTV.PushPullWindow.prototype = {
 
   /**
    *
+   * initSegment - The initialization segment timecode and data.
    */
   _pushInitSegment: function(initSegment) {
+    var self = this;
+
+    var timecode = initSegment.timecode,
+        start = initSegment.start,
+        data = initSegment.data;
+
+    P2PTV.log('pushing initialization segment:'
+      + ' timecode=' + timecode
+      + ', length=' + data.byteLength + ' bytes');
+
     // TODO
   },
 
@@ -880,6 +896,23 @@ P2PTV.PushPullWindow.prototype = {
    *
    */
   _pushMediaSegmentChunk: function(mediaSegmentChunk) {
+    var self = this;
+
+    var timecode = mediaSegmentChunk.timecode,
+        chunkIndex = mediaSegmentChunk.chunkIndex,
+        finalIndex = mediaSegmentChunk.finalIndex,
+        duration = mediaSegmentChunk.duration,
+        start = mediaSegmentChunk.start,
+        data = mediaSegmentChunk.data;
+
+    var durationString = (duration > 0) ? duration : 'unknown';
+
+    P2PTV.log('pushing media segment chunk:'
+      + ' timecode=' + timecode 
+      + ', chunkIndex=' + chunkIndex
+      + ', finalIndex=' + finalIndex
+      + ', duration=' + durationString
+      + ', length=' + data.byteLength + ' bytes');
     // TODO
   },
   

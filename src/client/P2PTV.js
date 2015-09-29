@@ -59,6 +59,8 @@ var P2PTV = P2PTV || {
 
     // check WebSocket support
     results.supportsWebSocket = !!window.WebSocket;
+    // check Blob support
+    results.supportsBlob = !!window.Blob;
     // check typed array support
     results.supportsArrayBuffer = !!window.ArrayBuffer;
     results.supportsFloat64Array = !!window.Float64Array;

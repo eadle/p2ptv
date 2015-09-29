@@ -18,16 +18,17 @@ P2PTV.Stream = function(options) {
     return null;
   }
 
+  self._streamId = P2PTV.generateStreamId();
+  P2PTV.STREAMS[self._streamId] = self;
+
   self._id = '';
   self._parents = {};
   self._children = {};
-  self._initialized = false;
-  self._streamId = P2PTV.generateStreamId();
-  P2PTV.STREAMS[self._streamId] = self;
-  // TODO implement P2PTV.Window
-  // self._window = new P2PTV.PushPullWindow(self);
+  self._pushPullWindow = new P2PTV.PushPullWindow(self);
   self._player = new P2PTV.Player(self._streamId, options);
   self._ws = null;
+
+  self._initialized = false;
 
   var server = options.server;
   if (typeof server !== 'string') {
@@ -156,8 +157,11 @@ P2PTV.Stream.prototype = {
    * data -
    */
   _pushData: function(data) {
-    // FIXME should be passing received data to the window
     var self = this;
+
+    // FIXME should be: data -> window -> player 
+    self._pushPullWindow.pushData(data); // testing
+
     self._player.addData(data);
     // broadcast data to children
     for (var key in self._children) {
