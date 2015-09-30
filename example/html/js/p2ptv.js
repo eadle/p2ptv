@@ -555,6 +555,7 @@ P2PTV.Player = function(streamId, options) {
 
   self._appending = false;
   self._hasInitSegment = false;
+  self._hasMediaSegment = false;
 
   self._sourceBuffer = null;
   self._reader = new FileReader();
@@ -615,10 +616,16 @@ P2PTV.Player.prototype = {
    * A media segment is ready for the player.
    * data - The media segment data assembled by the push pull window.
    */
-  appendMediaSegment: function(data) {
-    P2PTV.log('appending media segment: length=' + data.size
-      + ' bytes');
-    this._mediaSegmentQueue.push(data);
+  appendMediaSegment: function(data, timecode) {
+    var self = this;
+    P2PTV.log('appending media segment: length=' + data.size + ' bytes');
+    if (!self._hasMediaSegment) {
+      timecode = -timecode || 0;
+      P2PTV.log('setting timestampOffset to ' + timecode);
+      self._sourceBuffer.timestampOffset = timecode;
+      self._hasMediaSegment = true;
+    }
+    self._mediaSegmentQueue.push(data);
   },
 
   /** Set MediaSource and SourceBuffer callbacks. */
@@ -628,7 +635,12 @@ P2PTV.Player.prototype = {
     self._mediaSource.addEventListener('sourceopen', function(event) {
       P2PTV.log('MediaSource event: sourceopen');
       var type = 'video/webm; codecs="vorbis,vp8"';
+
       self._sourceBuffer = self._mediaSource.addSourceBuffer(type);
+      //self._sourceBuffer.mode = 'sequence';
+      P2PTV.log('timestampOffset: ' + self._sourceBuffer.timestampOffset);
+      P2PTV.log('mode: ' + self._sourceBuffer.mode);
+
       self._sourceBuffer.addEventListener('abort', function() {
         P2PTV.log('SourceBuffer event: onabort');
       }, false);
@@ -831,9 +843,13 @@ P2PTV.MediaSegment.prototype = {
   /**
    * Assembly the media segment chunks into a Blob.
    */
-  getBlob: function() {
+  getBlob: function(initSegment) {
     // FIXME
     var self = this;
+    if (!!initSegment) {
+      P2PTV.log('in getBlob: unshifting an initialization segment');
+      self._chunkData.unshift(initSegment);
+    }
     var blob = new Blob(self._chunkData, {type: 'video/webm'});
     return blob;
   },
@@ -897,9 +913,10 @@ P2PTV.PushPullWindow.prototype = {
     
     switch (type) {
       case P2PTV.INIT_SEGMENT:
+        var start = 9 + (0x07 & uint8view[0]);
         self._pushInitSegment({
           timecode: timecode,
-          start: 9 + (0x07 & uint8view[0]),
+          start: start,
           data: data
         }); 
         break;
@@ -979,7 +996,10 @@ P2PTV.PushPullWindow.prototype = {
 
     // TODO
     if (mediaSegment.isComplete()) {
-      self._player.appendMediaSegment(mediaSegment.getBlob());
+      self._player.appendMediaSegment(
+        mediaSegment.getBlob(),
+        chunk.timecode
+      );
     }
 
   },

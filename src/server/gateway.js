@@ -35,7 +35,7 @@ function Gateway(options) {
 
   var sentChunks = 0;
   var sentInitSegments = 0;
-  self.initSegment = null;
+  self.lastInitSegment = null;
 
   self.pushPullWindow = new PushPullWindow({
     durations: durations,
@@ -50,7 +50,7 @@ function Gateway(options) {
 
   // webm byte stream has given us an initialization segment to broadcast
   self.pushPullWindow.on('Initialization Segment', function(data) {
-    self.initSegment = data;
+    self.lastInitSegment = data;
     self.broadcast(data);
     sentInitSegments++;
   });
@@ -81,6 +81,9 @@ Gateway.prototype.connect = function(peer) {
   if (null !== peer && undefined !== peer) {
     peer.connectedToGateway = true;
     self.children[peer.id] = peer;
+    if (!!self.lastInitSegment) {
+      peer.send(self.lastInitSegment);
+    }
   } else {
     debug('at connect: INVALID PEER OBJECT ('+peer+')');
   }

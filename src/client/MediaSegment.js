@@ -49,9 +49,13 @@ P2PTV.MediaSegment.prototype = {
   /**
    * Assembly the media segment chunks into a Blob.
    */
-  getBlob: function() {
+  getBlob: function(initSegment) {
     // FIXME
     var self = this;
+    if (!!initSegment) {
+      P2PTV.log('in getBlob: unshifting an initialization segment');
+      self._chunkData.unshift(initSegment);
+    }
     var blob = new Blob(self._chunkData, {type: 'video/webm'});
     return blob;
   },

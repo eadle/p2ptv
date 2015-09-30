@@ -32,28 +32,18 @@ function PushPullWindow(options) {
   self._encoder = new Encoder();
   self._webmstream = new WebMByteStream({durations: durations});
 
-  // get byte stream ready for datachannel
   var lastTime = new Date().getTime();
+
   self._webmstream.on('Initialization Segment', function(data) {
     self._pushInitSegment(data, lastTime); // TODO
   });
+
   self._webmstream.on('Media Segment', function(data) {
-    lastTime = new Date().getTime();
+    //lastTime = new Date().getTime();
+    lastTime = data.timecode;
     self._pushMediaSegment(data, lastTime);
   });
 
-  // push media segment chunks to gateway
-/*
-  var messagesPerSec = (bitrate*1024)/self._encoder._maxChunkSize;
-  setInterval(function() {
-    var chunk = self._pushQueue.shift();
-    if (chunk) {
-      self.emit('Media Segment Chunk', chunk);
-    }
-  }, 1000/messagesPerSec);
-  debug('Pushes ' + messagesPerSec + ' messages per second');
-*/
- 
 }
 
 require('util').inherits(PushPullWindow, Writable);

@@ -49,9 +49,10 @@ P2PTV.PushPullWindow.prototype = {
     
     switch (type) {
       case P2PTV.INIT_SEGMENT:
+        var start = 9 + (0x07 & uint8view[0]);
         self._pushInitSegment({
           timecode: timecode,
-          start: 9 + (0x07 & uint8view[0]),
+          start: start,
           data: data
         }); 
         break;
@@ -131,7 +132,10 @@ P2PTV.PushPullWindow.prototype = {
 
     // TODO
     if (mediaSegment.isComplete()) {
-      self._player.appendMediaSegment(mediaSegment.getBlob());
+      self._player.appendMediaSegment(
+        mediaSegment.getBlob(),
+        chunk.timecode
+      );
     }
 
   },
