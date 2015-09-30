@@ -3,12 +3,17 @@
  * TODO write description
  * stream -
  */
-P2PTV.PushPullWindow = function(stream) {
+P2PTV.PushPullWindow = function(stream, player) {
   var self = this;
 
   self._stream = stream;
   if (!self._stream) {
     throw new Error('Must pass Stream reference to PushPullWindow');
+  }
+
+  self._player = player;
+  if (!self._player) {
+    throw new Error('Must pass Player reference to PushPullWindow');
   }
 
   self._initSegmentHash = {};
@@ -57,7 +62,7 @@ P2PTV.PushPullWindow.prototype = {
           index: uint8view[1],
           finalIndex: uint8view[2],
           duration: int32view[3],
-          start: padding + P2PTV.MEDIA_SEGMENT_CHUNK_HEADER,
+          start: padding + 16,
           data: data
         });
         break;
@@ -83,11 +88,18 @@ P2PTV.PushPullWindow.prototype = {
     var self = this;
 
     // TODO should only be logged while debugging
+/*
     P2PTV.log('pushing initialization segment:'
       + ' timecode=' + initSegment.timecode
       + ', length=' + initSegment.data.byteLength + ' bytes');
+*/
 
-    // TODO
+    self._initSegmentHash[initSegment.timecode] = initSegment;
+
+    self._player.appendInitSegment(
+      initSegment.data.slice(initSegment.start)
+    );
+
   },
 
   /**
@@ -98,6 +110,7 @@ P2PTV.PushPullWindow.prototype = {
     var self = this;
 
     // FIXME should only be logged while debugging
+/*
     var durationString = (chunk.duration > 0) ? chunk.duration : 'unknown';
     P2PTV.log('pushing media segment chunk:'
       + ' timecode=' + chunk.timecode 
@@ -105,19 +118,20 @@ P2PTV.PushPullWindow.prototype = {
       + ', finalIndex=' + chunk.finalIndex
       + ', duration=' + durationString
       + ', length=' + chunk.data.byteLength + ' bytes');
+*/
 
     var mediaSegment = null;
-    if (!(timecode in self._mediaSegmentHash)) {
+    if (!(chunk.timecode in self._mediaSegmentHash)) {
       mediaSegment = new P2PTV.MediaSegment(chunk);
-      self._mediaSegmentHash[timecode] = mediaSegment;
+      self._mediaSegmentHash[chunk.timecode] = mediaSegment;
     } else {
-      mediaSegment = self._mediaSegmentHash[timecode]; 
+      mediaSegment = self._mediaSegmentHash[chunk.timecode]; 
       mediaSegment.addChunk(chunk);
     }
 
     // TODO
     if (mediaSegment.isComplete()) {
-      var blob = mediaSegment.getBlob();
+      self._player.appendMediaSegment(mediaSegment.getBlob());
     }
 
   },

@@ -1,9 +1,9 @@
 
 /**
- * TODO fill this out
+ * Simple MSE wrapper for playback of WebM Byte Stream Format.
  *
- * streamId -
- * options - 
+ * streamId - The stream id generated for the associated stream.
+ * options - The options for the video player.
  */
 P2PTV.Player = function(streamId, options) {
   var self = this;
@@ -14,166 +14,112 @@ P2PTV.Player = function(streamId, options) {
   }
   self._streamId = streamId;
 
-  // FIXME width and height should be options
-  self._width = 854;
-  self._height = 480;
-  self._parentElementId = options.parentElementId;
+  self._initSegmentQueue  = []; // stores ArrayBuffer
+  self._mediaSegmentQueue = []; // stores Blob
 
-  self._initSegment = null;
-  self._clusters = {}; 
-  self._timecodeQueue = []; 
   self._appending = false;
-  self._isPlaying = false;
+  self._hasInitSegment = false;
 
-  self._mediaSource = null;
   self._sourceBuffer = null;
-  self._setupVideo();
-
   self._reader = new FileReader();
-  self._reader.onload = function(e) {
-    self._sourceBuffer.appendBuffer(new Uint8Array(e.target.result));
-  };
+  self._mediaSource = new MediaSource();
+
+  self._setPlayerCallbacks();
+
+  // create video element
+  self._video = document.createElement('video');
+  self._video.id = 'p2ptv-' + self._streamId;
+  self._video.controls = true;
+  self._video.width = options.width || 854;
+  self._video.height = options.height || 480;
+  self._video.src = window.URL.createObjectURL(self._mediaSource);
+  self._video.pause();
+
+  // append video element
+  self._parentElementId = options.parentElementId;
+  var parentElement = document.getElementById(self._parentElementId);
+  if (!!parentElement) {
+    P2PTV.log('Appending stream ' + self._streamId + ' to '
+      + self._parentElementId);
+    parentElement.appendChild(self._video);
+  } else {
+    P2PTV.log('Appending stream ' + self._streamId + ' to body');
+    document.body.appendChild(self._video);
+  }
+
+  // temporary update loop
+  setInterval(function() {
+    if (!self._appending && !self._sourceBuffer.updating
+      && self._mediaSegmentQueue.length > 0) {
+      self._appending = true;
+      self._reader.readAsArrayBuffer(self._mediaSegmentQueue.shift());
+    }
+  }, 1000/30);
 
 };
 
 P2PTV.Player.prototype = {
+
   /**
-   * TODO fill this out
+   * An initialization segment is ready for the player.
+   * data - The initialization segment data received by the stream.
    */
-  _setupVideo: function() {
-    var self = this;
-
-    // using MSE
-    self._mediaSource = new MediaSource();
-
-    // create video element
-    var parentElement = document.getElementById(self._parentElementId);
-    self._video = document.createElement('video');
-    self._video.id = 'p2ptv-' + self._streamId;
-    self._video.controls = true;
-    self._video.width = self._width;
-    self._video.height = self._height;
-    self._video.src = window.URL.createObjectURL(self._mediaSource);
-    self._video.pause();
-
-    // append video element
-    if (!!parentElement) {
-      P2PTV.log('Appending stream ' + self._streamId + ' to '
-        + self._parentElementId);
-      parentElement.appendChild(self._video);
-    } else {
-      P2PTV.log('Appending stream ' + self._streamId + ' to body');
-      document.body.appendChild(self._video);
-    }
-
-    // when the media source object is ready
-    self._mediaSource.addEventListener('sourceopen', function(e) {
-      P2PTV.log('sourceopen');
-      var type = 'video/webm; codecs="vorbis,vp8"';
-      self._sourceBuffer = self._mediaSource.addSourceBuffer(type);
-      self._sourceBuffer.addEventListener('updateend', function() {
-        if (self._timecodeQueue.length > 0) {
-          self._appendMediaSegment(self._timecodeQueue.shift());
-        }   
-      }, false);
-    }, false);
-
-    // testing sourceended callback
-    self._mediaSource.addEventListener('sourceended', function(e) {
-      P2PTV.log('source ended');
-    }, false);
-
-    // testing sourceclose callback
-    self._mediaSource.addEventListener('sourceclose', function(e) {
-      P2PTV.log('source closed');
-    }, false);
-
-  },
-
   appendInitSegment: function(data) {
     var self = this;
-    self._reader.readAsArrayBuffer(data);
-  },
-
-  appendMediaSegment: function(data) {
-    var self = this;
-    self._reader.readAsArrayBuffer(data);
+    P2PTV.log('appending initialization segment: length=' + data.byteLength
+      + ' bytes');
+    if (!self._hasInitSegment) {
+      self._sourceBuffer.appendBuffer(data);
+    } else {
+      this._initSegmentQueue.push(data);
+    }
   },
 
   /**
-   * TODO fill this out
-   *
-   * timecode -
+   * A media segment is ready for the player.
+   * data - The media segment data assembled by the push pull window.
    */
-  _appendMediaSegment: function(timecode) {
-    var self = this;
-    self._appending = true;
-    P2PTV.log('appending media segment: timecode='+timecode);
-
-    var cluster = new Blob(self._clusters[timecode], {type: 'video/webm'});
-    self._reader.readAsArrayBuffer(cluster);
-
-    if (!self._isPlaying) {
-      P2PTV.log('playing video');
-      self._isPlaying = true;
-      self._video.play();
-    }
-
-    delete self._clusters[timecode];
-    self._appending = false;
+  appendMediaSegment: function(data) {
+    P2PTV.log('appending media segment: length=' + data.size
+      + ' bytes');
+    this._mediaSegmentQueue.push(data);
   },
 
-  addData: function(data) {
+  /** Set MediaSource and SourceBuffer callbacks. */
+  _setPlayerCallbacks: function() {
     var self = this;
 
-    // decode the message
-    var float64view = new Float64Array(data);
-    var timecode = float64view[0];
-    var uint8view = new Uint8Array(data, 8);
-    var int32view = new Int32Array(data);
-    var type = uint8view[0] >> 6;
-    switch (type) {
-      case 0:
-        var start = 9 + (0x07 & uint8view[0]);
-        P2PTV.log('appending initialization segment: timecode=' + timecode);
-        // check if we should add the init seg to source
-        self._sourceBuffer.appendBuffer(data.slice(start));
-        //self._initSegment = data.slice(start);
-        break;
-      case 1:
+    self._mediaSource.addEventListener('sourceopen', function(event) {
+      P2PTV.log('MediaSource event: sourceopen');
+      var type = 'video/webm; codecs="vorbis,vp8"';
+      self._sourceBuffer = self._mediaSource.addSourceBuffer(type);
+      self._sourceBuffer.addEventListener('abort', function() {
+        P2PTV.log('SourceBuffer event: onabort');
+      }, false);
+      self._sourceBuffer.addEventListener('error', function(error) {
+        P2PTV.log('SourceBuffer event: onerror: ' + error);
+      }, false);
+    }, false);
+    self._mediaSource.addEventListener('sourceended', function(event) {
+      P2PTV.log('sourceended');
+    }, false);
+    self._mediaSource.addEventListener('sourceclose', function(event) {
+      P2PTV.log('sourceclose');
+    }, false);
 
-        // decode relevant header information
-        var start = 16 + (0x07 & uint8view[0]);
-        var lastIndex = uint8view[2];
-        var chunkIndex = uint8view[1];
-
-        //var duration = int32view[3];
-        //P2PTV.log('received a chunk: chunkIndex=' + chunkIndex
-        // + ', finalIndex=' + lastIndex + ', duration=' + duration + 'ms');
-
-        // insert the cluster chunk into the cluster
-        var cluster = self._clusters[timecode];
-        if (!cluster) {
-          cluster = new Array(lastIndex+1);
-          cluster[chunkIndex] = data.slice(start);
-          self._clusters[timecode] = cluster;
-        } else {
-          cluster[chunkIndex] = data.slice(start);
+    self._reader.onload = function(event) {
+      self._sourceBuffer.appendBuffer(new Uint8Array(event.target.result));
+      // DONE: 2
+      if (self._reader.readyState === FileReader.DONE) {
+        if (self._video.paused) {
+          P2PTV.log('playing video');
+          self._video.play();
         }
+        self._appending = false; 
+      }
+    };
 
-        // check if we have a full cluster
-        if (chunkIndex+1 === cluster.length) {
-          //P2PTV.log('received a cluster: ' + timecode);
-          if (!self._appending && self._timecodeQueue.length === 0)
-            self._appendMediaSegment(timecode);
-          else
-            self._timecodeQueue.push(timecode);
-        }
-
-      default:
-    }
-
-  }
+  },
 
 };
 

@@ -88,7 +88,7 @@ PushPullWindow.prototype._pushInitSegment = function(data, timecode) {
 
   // push initialization segment
   self.emit('Initialization Segment', message.data);
-  debug('Emitting Initialization Segment: '+message.data.length+' bytes');
+  debug('Pushing Initialization Segment: payload='+ data.length + ' bytes');
 
 };
 
@@ -110,7 +110,7 @@ PushPullWindow.prototype._pushMediaSegment = function(data, timecode) {
 
   debug('Pushing media segment: timecode=' + timecode + ', duration='
     + ((duration < 0) ? 'unknown' : (duration + 'ms')) + ', chunks='
-    + numChunks);
+    + numChunks + ', payload=' + data.cluster.length + ' bytes');
 
   if (numChunks > maxChunksPerMessage) {
     throw new Error('Media Segment is too large: ' + numChunks

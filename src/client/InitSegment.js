@@ -6,6 +6,7 @@ P2PTV.InitSegment = function(args) {
   self._timecode = args.timecode;
   self._start = args.start;
   self._data = args.data;
+
 };
 
 P2PTV.InitSegment.prototype = {
