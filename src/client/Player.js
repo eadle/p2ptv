@@ -19,7 +19,6 @@ P2PTV.Player = function(streamId, options) {
 
   self._appending = false;
   self._hasInitSegment = false;
-  self._hasMediaSegment = false;
 
   self._sourceBuffer = null;
   self._reader = new FileReader();
@@ -48,7 +47,7 @@ P2PTV.Player = function(streamId, options) {
     document.body.appendChild(self._video);
   }
 
-  // temporary update loop
+  // FIXME temporary update loop
   setInterval(function() {
     if (!self._appending && !self._sourceBuffer.updating
       && self._mediaSegmentQueue.length > 0) {
@@ -61,6 +60,30 @@ P2PTV.Player = function(streamId, options) {
 
 P2PTV.Player.prototype = {
 
+  /** Set MediaSource and SourceBuffer callbacks. */
+  _setPlayerCallbacks: function() {
+    var self = this;
+
+    self._mediaSource.addEventListener('sourceopen', function(event) {
+      P2PTV.log('MediaSource event: sourceopen');
+      var type = 'video/webm; codecs="vorbis,vp8"';
+      self._sourceBuffer = self._mediaSource.addSourceBuffer(type);
+    }, false);
+
+    self._reader.onload = function(event) {
+      self._sourceBuffer.appendBuffer(new Uint8Array(event.target.result));
+      console.log(self._sourceBuffer.buffered);
+      if (self._reader.readyState === FileReader.DONE) {
+        if (self._video.paused) {
+          P2PTV.log('playing video');
+          self._video.play();
+        }
+        self._appending = false; 
+      }
+    };
+
+  },
+
   /**
    * An initialization segment is ready for the player.
    * data - The initialization segment data received by the stream.
@@ -72,7 +95,7 @@ P2PTV.Player.prototype = {
     if (!self._hasInitSegment) {
       self._sourceBuffer.appendBuffer(data);
     } else {
-      this._initSegmentQueue.push(data);
+      self._initSegmentQueue.push(data);
     }
   },
 
@@ -80,58 +103,14 @@ P2PTV.Player.prototype = {
    * A media segment is ready for the player.
    * data - The media segment data assembled by the push pull window.
    */
-  appendMediaSegment: function(data, timecode) {
+  appendMediaSegment: function(data, timestampOffset) {
     var self = this;
-    P2PTV.log('appending media segment: length=' + data.size + ' bytes');
-    if (!self._hasMediaSegment) {
-      timecode = -timecode || 0;
-      P2PTV.log('setting timestampOffset to ' + timecode);
-      self._sourceBuffer.timestampOffset = timecode;
-      self._hasMediaSegment = true;
-    }
+    timestampOffset = timestampOffset || 0;
+    P2PTV.log('appending media segment: timestampOffset=' + timestampOffset
+     + ', length=' + data.size + ' bytes');
+    self._sourceBuffer.timestampOffset = timestampOffset/1000;
     self._mediaSegmentQueue.push(data);
-  },
-
-  /** Set MediaSource and SourceBuffer callbacks. */
-  _setPlayerCallbacks: function() {
-    var self = this;
-
-    self._mediaSource.addEventListener('sourceopen', function(event) {
-      P2PTV.log('MediaSource event: sourceopen');
-      var type = 'video/webm; codecs="vorbis,vp8"';
-
-      self._sourceBuffer = self._mediaSource.addSourceBuffer(type);
-      //self._sourceBuffer.mode = 'sequence';
-      P2PTV.log('timestampOffset: ' + self._sourceBuffer.timestampOffset);
-      P2PTV.log('mode: ' + self._sourceBuffer.mode);
-
-      self._sourceBuffer.addEventListener('abort', function() {
-        P2PTV.log('SourceBuffer event: onabort');
-      }, false);
-      self._sourceBuffer.addEventListener('error', function(error) {
-        P2PTV.log('SourceBuffer event: onerror: ' + error);
-      }, false);
-    }, false);
-    self._mediaSource.addEventListener('sourceended', function(event) {
-      P2PTV.log('sourceended');
-    }, false);
-    self._mediaSource.addEventListener('sourceclose', function(event) {
-      P2PTV.log('sourceclose');
-    }, false);
-
-    self._reader.onload = function(event) {
-      self._sourceBuffer.appendBuffer(new Uint8Array(event.target.result));
-      // DONE: 2
-      if (self._reader.readyState === FileReader.DONE) {
-        if (self._video.paused) {
-          P2PTV.log('playing video');
-          self._video.play();
-        }
-        self._appending = false; 
-      }
-    };
-
-  },
+  }
 
 };
 

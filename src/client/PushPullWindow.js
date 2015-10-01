@@ -16,6 +16,8 @@ P2PTV.PushPullWindow = function(stream, player) {
     throw new Error('Must pass Player reference to PushPullWindow');
   }
 
+  self._initialTimecode = -1;
+  self._lastInitSegment = null;
   self._initSegmentHash = {};
   self._mediaSegmentHash = {};
 
@@ -88,18 +90,16 @@ P2PTV.PushPullWindow.prototype = {
   _pushInitSegment: function(initSegment) {
     var self = this;
 
-    // TODO should only be logged while debugging
 /*
+    // TODO should only be logged while debugging
     P2PTV.log('pushing initialization segment:'
       + ' timecode=' + initSegment.timecode
       + ', length=' + initSegment.data.byteLength + ' bytes');
 */
 
     self._initSegmentHash[initSegment.timecode] = initSegment;
-
-    self._player.appendInitSegment(
-      initSegment.data.slice(initSegment.start)
-    );
+    self._lastInitSegment = initSegment.data.slice(initSegment.start);
+    self._player.appendInitSegment(self._lastInitSegment);
 
   },
 
@@ -110,8 +110,8 @@ P2PTV.PushPullWindow.prototype = {
   _pushMediaSegmentChunk: function(chunk) {
     var self = this;
 
-    // FIXME should only be logged while debugging
 /*
+    // FIXME should only be logged while debugging
     var durationString = (chunk.duration > 0) ? chunk.duration : 'unknown';
     P2PTV.log('pushing media segment chunk:'
       + ' timecode=' + chunk.timecode 
@@ -130,11 +130,14 @@ P2PTV.PushPullWindow.prototype = {
       mediaSegment.addChunk(chunk);
     }
 
-    // TODO
     if (mediaSegment.isComplete()) {
+      if (self._initialTimecode < 0) {
+        self._initialTimecode = chunk.timecode;
+      }
       self._player.appendMediaSegment(
+        // mediaSegment.getBlob(self._lastInitSegment),
         mediaSegment.getBlob(),
-        chunk.timecode
+        chunk.timecode - self._initialTimecode
       );
     }
 

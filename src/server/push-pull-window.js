@@ -30,7 +30,10 @@ function PushPullWindow(options) {
   self._window = {};
   self._pushQueue = [];
   self._encoder = new Encoder();
-  self._webmstream = new WebMByteStream({durations: durations});
+  self._webmstream = new WebMByteStream({
+    durations: durations,
+    clearTimecodes: true
+  });
 
   var lastTime = new Date().getTime();
 
