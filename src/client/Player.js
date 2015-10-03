@@ -72,7 +72,6 @@ P2PTV.Player.prototype = {
 
     self._reader.onload = function(event) {
       self._sourceBuffer.appendBuffer(new Uint8Array(event.target.result));
-      console.log(self._sourceBuffer.buffered);
       if (self._reader.readyState === FileReader.DONE) {
         if (self._video.paused) {
           P2PTV.log('playing video');
