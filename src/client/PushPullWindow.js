@@ -134,10 +134,11 @@ P2PTV.PushPullWindow.prototype = {
       if (self._initialTimecode < 0) {
         self._initialTimecode = chunk.timecode;
       }
+
+      var timestampOffset = (chunk.timecode - self._initialTimecode)/1000;
       self._player.appendMediaSegment(
-        // mediaSegment.getBlob(self._lastInitSegment),
         mediaSegment.getBlob(),
-        chunk.timecode - self._initialTimecode
+        timestampOffset
       );
     }
 

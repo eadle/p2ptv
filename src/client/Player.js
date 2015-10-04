@@ -15,7 +15,7 @@ P2PTV.Player = function(streamId, options) {
   self._streamId = streamId;
 
   self._initSegmentQueue  = []; // stores ArrayBuffer
-  self._mediaSegmentQueue = []; // stores Blob
+  self._mediaSegmentQueue = []; // stores timecode and Blob
 
   self._appending = false;
   self._hasInitSegment = false;
@@ -52,7 +52,9 @@ P2PTV.Player = function(streamId, options) {
     if (!self._appending && !self._sourceBuffer.updating
       && self._mediaSegmentQueue.length > 0) {
       self._appending = true;
-      self._reader.readAsArrayBuffer(self._mediaSegmentQueue.shift());
+      var mediaSegment = self._mediaSegmentQueue.shift();
+      self._sourceBuffer.timestampOffset = mediaSegment.timestampOffset;
+      self._reader.readAsArrayBuffer(mediaSegment.data);
     }
   }, 1000/30);
 
@@ -107,8 +109,11 @@ P2PTV.Player.prototype = {
     timestampOffset = timestampOffset || 0;
     P2PTV.log('appending media segment: timestampOffset=' + timestampOffset
      + ', length=' + data.size + ' bytes');
-    self._sourceBuffer.timestampOffset = timestampOffset/1000;
-    self._mediaSegmentQueue.push(data);
+
+    self._mediaSegmentQueue.push({
+      timestampOffset: timestampOffset,
+      data: data
+    });
   }
 
 };
