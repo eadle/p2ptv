@@ -18,14 +18,9 @@ Feel free to [contribute](#contributing) if you are interested in the
 project.
 
 ## Supported browsers
-- Supports Chrome and Opera.
-
-Firefox has an incomplete implementation of MSE. You have to modify flags in about:config.
-```
-media.mediasource.enabled = true
-media.mediasource.webm.enabled = true
-media.mediasource.whitelist = false
-```
+- Chrome 34+
+- Opera 15+ 
+- Firefox 43+
 
 ## Install
 ```
