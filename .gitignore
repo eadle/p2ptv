@@ -1,3 +1,4 @@
 node_modules/
-example/server.js
 .*.swp
+example/server.js
+src/server/v0.5.0
