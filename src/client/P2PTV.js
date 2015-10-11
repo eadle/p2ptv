@@ -70,12 +70,8 @@ var P2PTV = P2PTV || {
     supports.RTCIceCandidate= !!this.RTCIceCandidate;
 
     supports.MediaSource= !!window.MediaSource;
-
-    if (supports.MediaSource) {
-      supports.WebM_VP8 = MediaSource.isTypeSupported(
-        'video/webm;codecs="vp8,vorbis"'
-      );
-    };
+    supports.WebM_VP8 = (!supports.MediaSource) ? false : 
+      MediaSource.isTypeSupported('video/webm;codecs="vp8,vorbis"');
 
     var supported = true;
     Object.keys(supports).forEach(function(key) {
