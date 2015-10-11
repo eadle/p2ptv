@@ -2,7 +2,7 @@
 
 var P2PTV = P2PTV || {
 
-  VERSION: 'v0.4.1',
+  VERSION: 'v0.4.2',
 
   CHANNEL: 'p2ptvchannel',
   ICE_SERVERS: [{url: 'stun:stun.l.google.com:19302'}],
@@ -70,12 +70,8 @@ var P2PTV = P2PTV || {
     supports.RTCIceCandidate= !!this.RTCIceCandidate;
 
     supports.MediaSource= !!window.MediaSource;
-
-    if (supports.MediaSource) {
-      supports.WebM_VP8 = MediaSource.isTypeSupported(
-        'video/webm;codecs="vp8,vorbis"'
-      );
-    };
+    supports.WebM_VP8 = (!supports.MediaSource) ? false : 
+      MediaSource.isTypeSupported('video/webm;codecs="vp8,vorbis"');
 
     var supported = true;
     Object.keys(supports).forEach(function(key) {
@@ -254,7 +250,6 @@ P2PTV.Stream = function(options) {
   if (!P2PTV.isSupported(results)) {
     P2PTV.log('Your browser does not support P2PTV ' + P2PTV.VERSION);
     if (typeof options.onNoSupport === 'function') {
-      console.log('results: ' + JSON.stringify(results));
       options.onNoSupport(results);
     }
     return null;
