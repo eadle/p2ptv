@@ -56,23 +56,20 @@ var P2PTV = P2PTV || {
       throw new Error('Must initialize P2PTV before checking for support');
     }
 
-    supports = {
-      WebSocket: !!window.WebSocket,
+    supports.WebSocket= !!window.WebSocket;
 
-      Blob: !!window.Blob,
-      FileReader: !!window.FileReader,
-      ArrayBuffer: !!window.ArrayBuffer,
-      Float64Array: !!window.Float64Array,
-      Uint8Array: !!window.Uint8Array,
-      Int32Array: !!window.Int32Array,
+    supports.Blob= !!window.Blob;
+    supports.FileReader= !!window.FileReader;
+    supports.ArrayBuffer= !!window.ArrayBuffer;
+    supports.Float64Array= !!window.Float64Array;
+    supports.Uint8Array= !!window.Uint8Array;
+    supports.Int32Array= !!window.Int32Array;
 
-      RTCPeerConnection: !!this.RTCPeerConnection,
-      RTCSessionDescription: !!this.RTCSessionDescription,
-      RTCIceCandidate: !!this.RTCIceCandidate,
+    supports.RTCPeerConnection= !!this.RTCPeerConnection;
+    supports.RTCSessionDescription= !!this.RTCSessionDescription;
+    supports.RTCIceCandidate= !!this.RTCIceCandidate;
 
-      MediaSource: !!window.MediaSource
-    };
-
+    supports.MediaSource= !!window.MediaSource;
 
     if (supports.MediaSource) {
       supports.WebM_VP8 = MediaSource.isTypeSupported(
