@@ -225,7 +225,7 @@ var P2PTV = P2PTV || {
           || window.webkitRTCIceCandidate;
       } else {
         this.log('Your browser doesn\'t appear to support WebRTC');
-        this.detectedBrowser('not supported');
+        this.detectedBrowser = 'not supported';
       }
     }
 
