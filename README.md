@@ -22,6 +22,10 @@ project.
 
 ## Install
 ```
+npm install p2ptv
+```
+or
+```
 $ git clone git://github.com/siphontv/p2ptv.git
 $ cd p2ptv
 $ npm install
