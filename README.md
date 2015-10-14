@@ -22,7 +22,9 @@ project.
 
 ## Install
 ```
-$ npm install p2ptv
+$ git clone git://github.com/siphontv/p2ptv.git
+$ cd p2ptv
+$ npm install
 ```
 
 - You may need to [install FFmpeg](https://trac.ffmpeg.org/wiki/CompilationGuide) from source with --enable-libvorbis and --enable-libvpx flags.
