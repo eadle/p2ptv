@@ -17,11 +17,13 @@ P2PTV.Player = function(streamId, options) {
   self._appending = false;
   self._hasInitSegment = false;
   self._playOnMediaSegment = true;
+
   self._initSegmentQueue  = []; // stores ArrayBuffer
   self._mediaSegmentQueue = []; // stores timecode and Blob
-  self._sourceBuffer = null;
+
   self._reader = new FileReader();
   self._mediaSource = new MediaSource();
+  self._sourceBuffer = null;
 
   // create video element
   self._timeDisplayMode = 0;
@@ -32,7 +34,11 @@ P2PTV.Player = function(streamId, options) {
   self._video.height = options.height || 480;
   self._video.src = window.URL.createObjectURL(self._mediaSource);
   self._video.pause();
-  self._setPlayerCallbacks(options.mediaPlayerControls);
+
+  self._setupMSECallbacks();
+  if (typeof options.mediaPlayerControls === 'object') {
+    self._setupControls(options.mediaPlayerControls);
+  }
 
   // append video element
   var parentElementId = options.parentElementId;
@@ -62,12 +68,37 @@ P2PTV.Player = function(streamId, options) {
 
 P2PTV.Player.prototype = {
 
-  /** Set MediaSource and SourceBuffer callbacks. */
-  _setPlayerCallbacks: function(controls) {
+  /** Setup MediaSource, SourceBuffer, and FileReader callbacks. */
+  _setupMSECallbacks: function() {
+    var self = this;
+
+    self._mediaSource.addEventListener('sourceopen', function(event) {
+      P2PTV.log('MediaSource event: sourceopen');
+      var type = 'video/webm; codecs="vorbis,vp8"';
+      self._sourceBuffer = self._mediaSource.addSourceBuffer(type);
+    }, false);
+
+    self._reader.onload = function(event) {
+      self._sourceBuffer.appendBuffer(new Uint8Array(event.target.result));
+      if (self._reader.readyState === FileReader.DONE) {
+        if (self._video.paused && self._playOnMediaSegment) {
+          P2PTV.log('playing video');
+          self._video.play();
+        }
+        self._appending = false; 
+      }
+    };
+
+  },
+
+  /** Setup custom controls. */
+  _setupControls: function(controls) {
     var self = this;
     controls = controls || {};
 
-    // media player control callbacks
+    self._playerContainerElement = controls.playerContainer;
+
+    // media player callbacks
     self._onPlayCallback = controls.onPlay || P2PTV.NOP;
     self._onPauseCallback = controls.onPause || P2PTV.NOP;
     self._onLastCallback = controls.onLast || P2PTV.NOP;
@@ -78,8 +109,7 @@ P2PTV.Player.prototype = {
     self._onMaximizeCallback = controls.onMaximize || P2PTV.NOP;
     self._onMinimizeCallback = controls.onMinimize || P2PTV.NOP;
 
-    // FIXME should enforce some requirements for custom controls
-    self._playerContainerElement = controls.playerContainer;
+    // gui elements
     self._playbackButtonElement = controls.playbackButton;
     self._lastButtonElement = controls.lastButton;
     self._volumeButtonElement = controls.volumeButton;
@@ -88,7 +118,7 @@ P2PTV.Player.prototype = {
     self._resizeButtonElement = controls.resizeButton;
     self._elapsedTimeElement = controls.elapsedTime;
 
-    // controls pausing and playing
+    // playing and pausing stream 
     if (!!self._playbackButtonElement) {
       self._playbackButtonElement.onclick = function() {
         if (self._video.paused) {
@@ -101,7 +131,7 @@ P2PTV.Player.prototype = {
       };
     }
 
-    // jump to last media segment
+    // jumping to most recent media segment
     if (!!self._lastButtonElement) {
       self._lastButtonElement.onclick = function() {
         // TODO jump to the last media segment
@@ -110,7 +140,7 @@ P2PTV.Player.prototype = {
       };
     }
 
-    // clicking volume button will mute and unmute
+    // muting and unmuting
     if (!!self._volumeButtonElement) {
       self._volumeButtonElement.onclick = function() {
         self._video.muted = !self._video.muted;
@@ -170,7 +200,7 @@ P2PTV.Player.prototype = {
       };
     }
 
-    // FIXME need to format current time
+    // clicking elapsed time changes display mode
     if (!!self._elapsedTimeElement) {
       self._elapsedTimeElement.onclick = function() {
         // TODO clicking elapsed time should change format mode
@@ -178,20 +208,20 @@ P2PTV.Player.prototype = {
       };
     }
 
-
-    // setting up video event callbacks
-    // FIXME this is ugly
     self._video.addEventListener('playing', function() {
       self._onPlayCallback();
     }, false);
+
     self._video.addEventListener('pause', function() {
       self._onPauseCallback();
     }, false);
+
     self._video.addEventListener('volumechange', function() {
       if (!self._video.muted) {
         self._onVolumeChangeCallback(self._video.volume);
       }
     }, false);
+
     self._video.addEventListener('timeupdate', function() {
       if (!!self._elapsedTimeElement) {
         var currentTime = self._video.currentTime;
@@ -205,32 +235,17 @@ P2PTV.Player.prototype = {
         self._elapsedTimeElement.innerHTML = format;
       }
     }, false);
-    // required for proper icon rendering on fullscreen change
-    document.onmozfullscreenchange = document.onwebkitfullscreenchange
-      = document.onfullscreenchange = function() {
+
+    var onFullScreenChange = function() {
       if (self.isFullScreen()) {
         self._onMaximizeCallback();
       } else {
         self._onMinimizeCallback();
       }
     };
-
-    self._mediaSource.addEventListener('sourceopen', function(event) {
-      P2PTV.log('MediaSource event: sourceopen');
-      var type = 'video/webm; codecs="vorbis,vp8"';
-      self._sourceBuffer = self._mediaSource.addSourceBuffer(type);
-    }, false);
-
-    self._reader.onload = function(event) {
-      self._sourceBuffer.appendBuffer(new Uint8Array(event.target.result));
-      if (self._reader.readyState === FileReader.DONE) {
-        if (self._video.paused && self._playOnMediaSegment) {
-          P2PTV.log('playing video');
-          self._video.play();
-        }
-        self._appending = false; 
-      }
-    };
+    document.onmozfullscreenchange = onFullScreenChange;
+    document.onwebkitfullscreenchange = onFullScreenChange;
+    document.onfullscreenchange = onFullScreenChange;
 
   },
 
@@ -250,6 +265,7 @@ P2PTV.Player.prototype = {
     if (!self._hasInitSegment) {
       self._sourceBuffer.appendBuffer(data);
     } else {
+      self._mediaSource.onSourceEnd();
       self._initSegmentQueue.push(data);
     }
   },
