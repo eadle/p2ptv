@@ -16,10 +16,9 @@ P2PTV.PushPullWindow = function(stream, player) {
     throw new Error('Must pass Player reference to PushPullWindow');
   }
 
+  self._key = null;
+  self._stream = {};
   self._initialTimecode = -1;
-  self._lastInitSegment = null;
-  self._initSegmentHash = {};
-  self._mediaSegmentHash = {};
 
 };
 
@@ -90,16 +89,17 @@ P2PTV.PushPullWindow.prototype = {
   _pushInitSegment: function(initSegment) {
     var self = this;
 
-/*
-    // TODO should only be logged while debugging
-    P2PTV.log('pushing initialization segment:'
-      + ' timecode=' + initSegment.timecode
-      + ', length=' + initSegment.data.byteLength + ' bytes');
-*/
+    // initial media segment timecode unknown
+    self._initialTimecode = -1;
 
-    self._initSegmentHash[initSegment.timecode] = initSegment;
-    self._lastInitSegment = initSegment.data.slice(initSegment.start);
-    self._player.appendInitSegment(self._lastInitSegment);
+    self._key = initSegment.timecode;
+    self._stream[self._key] =  {
+      initSegment: initSegment,
+      mediaSegmentHash: {},
+      timecodeQueue: []
+    };
+
+    self._player.appendInitSegment(initSegment.data.slice(initSegment.start));
 
   },
 
@@ -109,24 +109,16 @@ P2PTV.PushPullWindow.prototype = {
    */
   _pushMediaSegmentChunk: function(chunk) {
     var self = this;
-
-/*
-    // FIXME should only be logged while debugging
-    var durationString = (chunk.duration > 0) ? chunk.duration : 'unknown';
-    P2PTV.log('pushing media segment chunk:'
-      + ' timecode=' + chunk.timecode 
-      + ', chunkIndex=' + chunk.index
-      + ', finalIndex=' + chunk.finalIndex
-      + ', duration=' + durationString
-      + ', length=' + chunk.data.byteLength + ' bytes');
-*/
-
+    
+    var stream = self._stream[self._key];
     var mediaSegment = null;
-    if (!(chunk.timecode in self._mediaSegmentHash)) {
+
+    if (!(chunk.timecode in stream.mediaSegmentHash)) {
       mediaSegment = new P2PTV.MediaSegment(chunk);
-      self._mediaSegmentHash[chunk.timecode] = mediaSegment;
+      stream.mediaSegmentHash[chunk.timecode] = mediaSegment;
+      stream.timecodeQueue.push(chunk.timecode);
     } else {
-      mediaSegment = self._mediaSegmentHash[chunk.timecode]; 
+      mediaSegment = stream.mediaSegmentHash[chunk.timecode];
       mediaSegment.addChunk(chunk);
     }
 
@@ -134,7 +126,6 @@ P2PTV.PushPullWindow.prototype = {
       if (self._initialTimecode < 0) {
         self._initialTimecode = chunk.timecode;
       }
-
       var timestampOffset = (chunk.timecode - self._initialTimecode)/1000;
       self._player.appendMediaSegment(
         mediaSegment.getBlob(),
