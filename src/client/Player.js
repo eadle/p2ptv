@@ -193,9 +193,16 @@ P2PTV.Player.prototype = {
       }
     }, false);
     self._video.addEventListener('timeupdate', function() {
-      // FIXME
       if (!!self._elapsedTimeElement) {
-        self._elapsedTimeElement.innerHTML = self._video.currentTime;
+        var currentTime = self._video.currentTime;
+        var hours = Math.floor(currentTime/3600),
+            minutes = Math.floor(currentTime/60)%60,
+            seconds = Math.floor(currentTime)%60;
+        var format = (hours > 0) ? hours + ';' : '';
+        format += (hours > 0 && minutes < 10) ? '0' + minutes : minutes;
+        format += ':';
+        format += (seconds < 10) ? '0' + seconds : seconds;
+        self._elapsedTimeElement.innerHTML = format;
       }
     }, false);
     // required for proper icon rendering on fullscreen change
