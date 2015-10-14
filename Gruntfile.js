@@ -10,7 +10,7 @@ module.exports = function(grunt) {
         src: [
           'src/client/P2PTV.js',
           'src/client/Stream.js',
-          'src/client/Player.js',
+          'src/client/MediaPlayer.js',
           'src/client/Peer.js',
           'src/client/InitSegment.js',
           'src/client/MediaSegment.js',
