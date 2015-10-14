@@ -24,7 +24,7 @@ P2PTV.Stream = function(options) {
   self._id = '';
   self._parents = {};
   self._children = {};
-  self._player = new P2PTV.Player(self._streamId, options);
+  self._player = new P2PTV.MediaPlayer(self._streamId, options);
   self._pushPullWindow = new P2PTV.PushPullWindow(self, self._player);
   self._ws = null;
 

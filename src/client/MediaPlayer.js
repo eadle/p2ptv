@@ -5,12 +5,12 @@
  * streamId - The stream id generated for the associated stream.
  * options - The options for the video player.
  */
-P2PTV.Player = function(streamId, options) {
+P2PTV.MediaPlayer = function(streamId, options) {
   var self = this;
   options = options || {};
 
   if (typeof streamId !== 'string') {
-    throw new Error('P2PTV Player expects stream id: ' + streamId);
+    throw new Error('P2PTV MediaPlayer expects stream id: ' + streamId);
   }
   self._streamId = streamId;
 
@@ -66,7 +66,7 @@ P2PTV.Player = function(streamId, options) {
 
 };
 
-P2PTV.Player.prototype = {
+P2PTV.MediaPlayer.prototype = {
 
   /** Setup MediaSource, SourceBuffer, and FileReader callbacks. */
   _setupMSECallbacks: function() {
@@ -288,4 +288,4 @@ P2PTV.Player.prototype = {
 
 };
 
-P2PTV.Player.prototype.constructor = P2PTV.Player;
+P2PTV.MediaPlayer.prototype.constructor = P2PTV.MediaPlayer;
