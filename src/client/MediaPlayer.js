@@ -92,13 +92,13 @@ P2PTV.MediaPlayer.prototype = {
     var self = this;
 
     stream.mediaSource.addEventListener('sourceopen', function(event) {
-      P2PTV.log('MediaSource event: sourceopen');
+      // P2PTV.log('MediaSource event: sourceopen');
       var type = 'video/webm; codecs="vorbis,vp8"';
 
       stream.sourceBuffer = stream.mediaSource.addSourceBuffer(type);
 
       stream.sourceBuffer.addEventListener('updateend', function() {
-        P2PTV.log('SourceBuffer event: updateend');
+        // P2PTV.log('SourceBuffer event: updateend');
         stream.appending = false;
       }, false);
 
@@ -107,7 +107,7 @@ P2PTV.MediaPlayer.prototype = {
     }, false);
 
     stream.mediaSource.addEventListener('sourceended', function(event) {
-      P2PTV.log('MediaSource event: sourceended');
+      // P2PTV.log('MediaSource event: sourceended');
     }, false);
 
     stream.reader.onload = function(event) {
