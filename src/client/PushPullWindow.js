@@ -18,7 +18,6 @@ P2PTV.PushPullWindow = function(stream, player) {
 
   self._key = null;
   self._stream = {};
-  self._initialTimecode = -1;
 
 };
 
@@ -26,7 +25,7 @@ P2PTV.PushPullWindow.prototype = {
 
   /**
    * Push data received from parent into the window.
-
+   *
    * data - ArrayBuffer storing a P2PTV message. Byte length is a multiple 
    *        of 8 greater than or equal to 16.
    */
@@ -89,9 +88,6 @@ P2PTV.PushPullWindow.prototype = {
   _pushInitSegment: function(initSegment) {
     var self = this;
 
-    // initial media segment timecode unknown
-    self._initialTimecode = -1;
-
     self._key = initSegment.timecode;
     self._stream[self._key] =  {
       initSegment: initSegment,
@@ -99,8 +95,9 @@ P2PTV.PushPullWindow.prototype = {
       timecodeQueue: []
     };
 
-    self._player.appendInitSegment(initSegment.data.slice(initSegment.start));
-
+    self._player.appendInitSegment(
+      initSegment.data.slice(initSegment.start)
+    );
   },
 
   /**
@@ -123,13 +120,9 @@ P2PTV.PushPullWindow.prototype = {
     }
 
     if (mediaSegment.isComplete()) {
-      if (self._initialTimecode < 0) {
-        self._initialTimecode = chunk.timecode;
-      }
-      var timestampOffset = (chunk.timecode - self._initialTimecode)/1000;
       self._player.appendMediaSegment(
         mediaSegment.getBlob(),
-        timestampOffset
+        chunk.timecode
       );
     }
 
