@@ -78,6 +78,10 @@ P2PTV.MediaPlayer.prototype = {
       self._sourceBuffer = self._mediaSource.addSourceBuffer(type);
     }, false);
 
+    self._mediaSource.addEventListener('sourceended', function(event) {
+      P2PTV.log('MediaSource event: sourceended');
+    }, false);
+
     self._reader.onload = function(event) {
       self._sourceBuffer.appendBuffer(new Uint8Array(event.target.result));
       if (self._reader.readyState === FileReader.DONE) {
@@ -265,7 +269,6 @@ P2PTV.MediaPlayer.prototype = {
     if (!self._hasInitSegment) {
       self._sourceBuffer.appendBuffer(data);
     } else {
-      self._mediaSource.onSourceEnd();
       self._initSegmentQueue.push(data);
     }
   },
@@ -276,7 +279,7 @@ P2PTV.MediaPlayer.prototype = {
    */
   appendMediaSegment: function(data, timestampOffset) {
     var self = this;
-    timestampOffset = timestampOffset || 0;
+    timestampOffset = timestampOffset | 0;
     P2PTV.log('appending media segment: timestampOffset=' + timestampOffset
      + ', length=' + data.size + ' bytes');
 
