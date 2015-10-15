@@ -2,40 +2,33 @@
 /**
  * Simple MSE wrapper for playback of WebM Byte Stream Format.
  *
- * streamId - The stream id generated for the associated stream.
+ * id - The stream id generated for the associated stream.
  * options - The options for the video player.
  */
-P2PTV.MediaPlayer = function(streamId, options) {
+P2PTV.MediaPlayer = function(id, options) {
   var self = this;
   options = options || {};
 
-  if (typeof streamId !== 'string') {
-    throw new Error('P2PTV MediaPlayer expects stream id: ' + streamId);
+  if (typeof id !== 'string') {
+    throw new Error('P2PTV MediaPlayer expects an id: ' + id);
   }
-  self._streamId = streamId;
 
-  self._appending = false;
-  self._hasInitSegment = false;
+  self._id = id;
+  self._streamQueue = [];
+
+  // control settings
+  self._timeDisplayMode = 0;
   self._playOnMediaSegment = true;
 
-  self._initSegmentQueue  = []; // stores ArrayBuffer
-  self._mediaSegmentQueue = []; // stores timecode and Blob
-
-  self._reader = new FileReader();
-  self._mediaSource = new MediaSource();
-  self._sourceBuffer = null;
-
   // create video element
-  self._timeDisplayMode = 0;
   self._video = document.createElement('video');
-  self._video.id = 'p2ptv-' + self._streamId;
+  self._video.id = 'p2ptv-' + self._id;
   self._video.controls = !options.mediaPlayerControls;
   self._video.width = options.width || 854;
   self._video.height = options.height || 480;
-  self._video.src = window.URL.createObjectURL(self._mediaSource);
-  self._video.pause();
+  //self._video.src = window.URL.createObjectURL(self._stream.mediaSource);
+  //self._video.pause();
 
-  self._setupMSECallbacks();
   if (typeof options.mediaPlayerControls === 'object') {
     self._setupControls(options.mediaPlayerControls);
   }
@@ -44,52 +37,87 @@ P2PTV.MediaPlayer = function(streamId, options) {
   var parentElementId = options.parentElementId;
   self._parentElement = document.getElementById(parentElementId);
   if (!!self._parentElement) {
-    P2PTV.log('Appending stream ' + self._streamId + ' to '
-      + parentElementId);
+    P2PTV.log('Appending stream ' + self._id + ' to ' + parentElementId);
     self._parentElement.appendChild(self._video);
   } else {
-    P2PTV.log('Appending stream ' + self._streamId + ' to body');
+    P2PTV.log('Appending stream ' + self._id + ' to body');
     document.body.appendChild(self._video);
     self._parentElement = document.body;
   }
 
   // FIXME temporary update loop
   setInterval(function() {
-    if (!self._appending && !self._sourceBuffer.updating
-      && self._mediaSegmentQueue.length > 0) {
-      self._appending = true;
-      var mediaSegment = self._mediaSegmentQueue.shift();
-      self._sourceBuffer.timestampOffset = mediaSegment.timestampOffset;
-      self._reader.readAsArrayBuffer(mediaSegment.data);
+
+
+    if (self._streamQueue.length > 0) {
+      var stream = self._streamQueue[0];
+
+      // FIXME should switch stream.readyState
+      if (!stream.active) {
+        stream.active = true;
+        self._video.src = window.URL.createObjectURL(stream.mediaSource);
+        self._video.pause();
+      } else if (self._streamIsFinished(stream)) {
+        self._streamQueue.shift();
+      } else if (self._streamCanAppend(stream)) {
+        stream.appending = true;
+        var mediaSegment = stream.mediaSegmentQueue.shift();
+        stream.sourceBuffer.timestampOffset = mediaSegment.timestampOffset;
+        stream.reader.readAsArrayBuffer(mediaSegment.data);
+      }
+
     }
+
   }, 1000/30);
 
 };
 
 P2PTV.MediaPlayer.prototype = {
 
+  /** Returns true if a stream should append to the source buffer. */
+  _streamCanAppend: function(stream) {
+    return !stream.appending && !stream.sourceBuffer.updating
+      && (stream.mediaSegmentQueue.length > 0);
+  },
+
+  /** Returns true if a stream . */
+  _streamIsFinished: function(stream) {
+    var self = this;
+    return stream.complete && (stream.mediaSegmentQueue.length === 0) 
+      && (self._video.readyState <= 2);
+  },
+
   /** Setup MediaSource, SourceBuffer, and FileReader callbacks. */
-  _setupMSECallbacks: function() {
+  _setupStreamCallbacks: function(stream) {
     var self = this;
 
-    self._mediaSource.addEventListener('sourceopen', function(event) {
+    stream.mediaSource.addEventListener('sourceopen', function(event) {
       P2PTV.log('MediaSource event: sourceopen');
       var type = 'video/webm; codecs="vorbis,vp8"';
-      self._sourceBuffer = self._mediaSource.addSourceBuffer(type);
+
+      stream.sourceBuffer = stream.mediaSource.addSourceBuffer(type);
+
+      stream.sourceBuffer.addEventListener('updateend', function() {
+        P2PTV.log('SourceBuffer event: updateend');
+        stream.appending = false;
+      }, false);
+
+      stream.sourceBuffer.appendBuffer(stream.initSegment);
+
     }, false);
 
-    self._mediaSource.addEventListener('sourceended', function(event) {
+    stream.mediaSource.addEventListener('sourceended', function(event) {
       P2PTV.log('MediaSource event: sourceended');
     }, false);
 
-    self._reader.onload = function(event) {
-      self._sourceBuffer.appendBuffer(new Uint8Array(event.target.result));
-      if (self._reader.readyState === FileReader.DONE) {
-        if (self._video.paused && self._playOnMediaSegment) {
+    stream.reader.onload = function(event) {
+      stream.sourceBuffer.appendBuffer(new Uint8Array(event.target.result));
+      if (stream.reader.readyState === FileReader.DONE) {
+        if (stream.active && self._video.paused
+          && self._playOnMediaSegment) {
           P2PTV.log('playing video');
           self._video.play();
         }
-        self._appending = false; 
       }
     };
 
@@ -247,6 +275,7 @@ P2PTV.MediaPlayer.prototype = {
         self._onMinimizeCallback();
       }
     };
+    // FIXME shouldn't set all of them
     document.onmozfullscreenchange = onFullScreenChange;
     document.onwebkitfullscreenchange = onFullScreenChange;
     document.onfullscreenchange = onFullScreenChange;
@@ -257,36 +286,67 @@ P2PTV.MediaPlayer.prototype = {
   isFullScreen: function() {
     return (document.webkitIsFullScreen || document.mozFullScreen);
   },
+
+
     
   /**
-   * An initialization segment is ready for the player.
-   * data - The initialization segment data received by the stream.
+   * Append an initialization segment to the append stream.
+   *
+   * data - An initialization segment ArrayBuffer.
    */
   appendInitSegment: function(data) {
     var self = this;
+
     P2PTV.log('appending initialization segment: length=' + data.byteLength
       + ' bytes');
-    if (!self._hasInitSegment) {
-      self._sourceBuffer.appendBuffer(data);
-    } else {
-      self._initSegmentQueue.push(data);
+
+    if (self._streamQueue.length > 0) {
+      // previous stream isn't expecting any more media segments
+      self._streamQueue[self._streamQueue.length-1].complete = true;      
     }
+
+    var stream = {
+      active: false,
+      appending: true,
+      complete: false,
+      initSegment: data,     // stores ArrayBuffer
+      mediaSegmentQueue: [], // stores Blob and timestampOffset
+      initialTimecode: -1,   // initial media segment timecode unknown
+      sourceBuffer: null,
+      mediaSource: new MediaSource(),
+      reader: new FileReader()
+    };
+    self._setupStreamCallbacks(stream);
+    self._streamQueue.push(stream);
+
   },
 
   /**
-   * A media segment is ready for the player.
-   * data - The media segment data assembled by the push pull window.
+   * Append a media segment to the append stream.
+   *
+   * data - A media segment Blob with a zeroed out timecode.
+   * timecode - The original timecode of the media segment.
    */
-  appendMediaSegment: function(data, timestampOffset) {
+  appendMediaSegment: function(data, timecode) {
     var self = this;
-    timestampOffset = timestampOffset | 0;
-    P2PTV.log('appending media segment: timestampOffset=' + timestampOffset
+
+    P2PTV.log('appending media segment: timecode=' + timecode
      + ', length=' + data.size + ' bytes');
 
-    self._mediaSegmentQueue.push({
+    var stream = self._streamQueue[self._streamQueue.length - 1];
+
+    if (stream.initialTimecode < 0) {
+      stream.initialTimecode = timecode;
+    }
+
+    timecode = timecode | 0;
+    var timestampOffset = (timecode - stream.initialTimecode)/1000;
+
+    stream.mediaSegmentQueue.push({
       timestampOffset: timestampOffset,
       data: data
     });
+
   }
 
 };
