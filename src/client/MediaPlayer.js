@@ -23,12 +23,9 @@ P2PTV.MediaPlayer = function(id, options) {
   // create video element
   self._video = document.createElement('video');
   self._video.id = 'p2ptv-' + self._id;
-  self._video.controls = !options.mediaPlayerControls;
   self._video.width = options.width || 854;
   self._video.height = options.height || 480;
-  //self._video.src = window.URL.createObjectURL(self._stream.mediaSource);
-  //self._video.pause();
-
+  self._video.controls = !options.mediaPlayerControls;
   if (typeof options.mediaPlayerControls === 'object') {
     self._setupControls(options.mediaPlayerControls);
   }
@@ -48,7 +45,6 @@ P2PTV.MediaPlayer = function(id, options) {
   // FIXME temporary update loop
   setInterval(function() {
 
-
     if (self._streamQueue.length > 0) {
       var stream = self._streamQueue[0];
 
@@ -58,7 +54,8 @@ P2PTV.MediaPlayer = function(id, options) {
         self._video.src = window.URL.createObjectURL(stream.mediaSource);
         self._video.pause();
       } else if (self._streamIsFinished(stream)) {
-        self._streamQueue.shift();
+        var oldStream = self._streamQueue.shift();
+        oldStream.mediaSource.endOfStream();
       } else if (self._streamCanAppend(stream)) {
         stream.appending = true;
         var mediaSegment = stream.mediaSegmentQueue.shift();
@@ -83,8 +80,8 @@ P2PTV.MediaPlayer.prototype = {
   /** Returns true if a stream . */
   _streamIsFinished: function(stream) {
     var self = this;
-    return stream.complete && (stream.mediaSegmentQueue.length === 0) 
-      && (self._video.readyState <= 2);
+    return stream.complete && stream.stalled
+      && (stream.mediaSegmentQueue.length === 0);
   },
 
   /** Setup MediaSource, SourceBuffer, and FileReader callbacks. */
@@ -240,6 +237,12 @@ P2PTV.MediaPlayer.prototype = {
       };
     }
 
+    self._video.onstalled = function() {
+      if (self._streamQueue.length > 0) {
+        self._streamQueue[0].stalled = true;
+      }
+    };
+
     self._video.addEventListener('playing', function() {
       self._onPlayCallback();
     }, false);
@@ -309,6 +312,7 @@ P2PTV.MediaPlayer.prototype = {
       active: false,
       appending: true,
       complete: false,
+      stalled: false,
       initSegment: data,     // stores ArrayBuffer
       mediaSegmentQueue: [], // stores Blob and timestampOffset
       initialTimecode: -1,   // initial media segment timecode unknown
