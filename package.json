@@ -37,10 +37,10 @@
     "mocha": "^2.2.5"
   },
   "bugs": {
-    "url": "https://github.com/siphontv/p2ptv/issues"
+    "url": "https://github.com/eadle/p2ptv/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/siphontv/p2ptv.git"
+    "url": "git://github.com/eadle/p2ptv.git"
   }
 }

@@ -26,7 +26,7 @@ npm install p2ptv
 ```
 or
 ```
-$ git clone git://github.com/siphontv/p2ptv.git
+$ git clone git://github.com/eadle/p2ptv.git
 $ cd p2ptv
 $ npm install
 ```
@@ -75,7 +75,7 @@ much processing power you're willing to give your transcoding box.
 MIT
 
 ## Contributing
-Feel free to create an [issue](https://github.com/siphontv/p2ptv/issues) or
+Feel free to create an [issue](https://github.com/eadle/p2ptv/issues) or
 pull request.
 
 Could always use some feedback from FFmpeg wizards.
