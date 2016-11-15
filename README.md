@@ -38,12 +38,12 @@ $ npm install
 ## Usage
 Without logging:
 ```
-$ node examples/example.js
+$ node example/example.js
 ```
 
 With verbose logging:
 ```
-$ DEBUG=p2ptv,gateway,peer,push-pull-window node examples/example.js
+$ DEBUG=p2ptv,gateway,peer,push-pull-window node example/example.js
 ```
 
 ## Transcoding
