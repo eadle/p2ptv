@@ -1,8 +1,8 @@
-var P2PTV = require('../lib/p2ptv.js'),
-    Gateway = require('../lib/gateway.js'),
-    Peer = require('../lib/peer.js'),
-    PushPullWindow = require('../lib/push-pull-window.js'),
-    Encoder = require('../lib/encoder.js'),
+var P2PTV = require('../src/server/p2ptv.js'),
+    Gateway = require('../src/server/gateway.js'),
+    Peer = require('../src/server/peer.js'),
+    PushPullWindow = require('../src/server/push-pull-window.js'),
+    Encoder = require('../src/server/encoder.js'),
     assert = require('assert');
 
 describe('p2ptv', function() {
