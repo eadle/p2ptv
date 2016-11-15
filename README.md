@@ -5,9 +5,9 @@ An open source P2P livestreaming module for synchronized playback in HTML5.
 the [WebM Byte Stream Format](https://w3c.github.io/media-source/webm-byte-stream-format.html) directly to the browser where the experimental [MSE](https://w3c.github.io/media-source/) API is used for playback. Livestreams are
 transcoded from RTMP or from a file before being processed by this module.
 
-The plan is to **significantly** reduce the cost of livestreaming by forming
-a P2P distribution network using WebRTC. Right now, it is working only as
-a client-server architecture. If you're interested in starting a webservice,
+The plan is to significantly reduce the cost of livestreaming by forming
+a P2P distribution network using WebRTC. **Currently has only client-server
+implementation**. If you're interested in starting a webservice,
 it is probably in your best interest to use conventional streaming methods. 
 
 Please note that this is alpha software. Meaning it is experimental,
@@ -75,7 +75,5 @@ much processing power you're willing to give your transcoding box.
 MIT
 
 ## Contributing
-Feel free to create an [issue](https://github.com/eadle/p2ptv/issues) or
-pull request.
-
-Could always use some feedback from FFmpeg wizards.
+Not really actively working on this anymore.
+Feel free to create an [issue](https://github.com/eadle/p2ptv/issues) or pull request though.
