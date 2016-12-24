@@ -2,7 +2,7 @@
 
 var P2PTV = P2PTV || {
 
-  VERSION: 'v0.4.5',
+  VERSION: 'v0.5.0',
 
   CHANNEL: 'p2ptvchannel',
   ICE_SERVERS: [{url: 'stun:stun.l.google.com:19302'}],
@@ -389,14 +389,13 @@ P2PTV.Stream.prototype = {
   },
 
   /**
-   * TODO fill this out
+   * Push stream data into push-pull-window and pass data to children.
    *
-   * data -
+   * data - initialization or media segment data
    */
   _pushData: function(data) {
     var self = this;
 
-    // FIXME data should be emitted from window to other peers
     self._pushPullWindow.pushData(data);
 
     // broadcast data to children
@@ -408,11 +407,11 @@ P2PTV.Stream.prototype = {
   },
 
   /**
-   * TODO fill this out
+   * Initiate WebRTC peer connection handshake.
    *
-   * peer -
+   * pid - peer id to connect to
    */
-  _setupPeerConnection: function(peer) {
+  _setupPeerConnection: function(pid) {
     var self = this;
     var peer = new Peer(self, pid, relation);
     peer.pc = new P2PTV.RTCPeerConnection(P2PTV.ICE_SERVERS,
@@ -431,9 +430,9 @@ P2PTV.Stream.prototype = {
   },
 
   /**
-   * TODO fill this out
+   * Send SDP offer to peer.
    *
-   * peer -
+   * peer - peer to send offer to
    */
   _makeOffer: function(peer) {
     var self = this;
@@ -453,9 +452,9 @@ P2PTV.Stream.prototype = {
   },
 
   /**
-   * TODO fill this out
+   * Send SDP answer to peer.
    *
-   * peer -
+   * peer - peer to send answer to
    */
   _makeAnswer: function(peer) {
     var self = this;
@@ -473,10 +472,10 @@ P2PTV.Stream.prototype = {
   },
 
   /**
-   * TODO fill ths out
+   * Handle SDP offer from peer.
    *
-   * offer -
-   * peer -
+   * offer - sdp offer
+   * peer - the peer who sent the offer
    */
   _handleOffer: function(offer, peer) {
     var self = this;
@@ -488,10 +487,10 @@ P2PTV.Stream.prototype = {
   },
 
   /**
-   * TODO fill this out
+   * Handle SDP answer from peer.
    *
-   * answer -
-   * peer -
+   * answer - sdp answer
+   * peer - the peer who sent the answer
    */
   _handleAnswer: function(answer, peer) {
     var self = this;
@@ -515,7 +514,7 @@ P2PTV.Stream.prototype = {
     }, self._traceErr);
   },
   
-  /** TODO fill this out */
+  /** Log error info. */
   _traceErr: function(err) {
     P2PTV.log(err);
   },
@@ -906,16 +905,16 @@ P2PTV.Peer = function(client, id, relation) {
     throw new Error('Peer expects valid relation');
   }
 
-	// relationship
+  // relationship
   self.isParent = ('parent' === relation);
   self.isChild = !self.isParent;
 
-	// data channel
+  // data channel
   self.pc = null;
   self.channel = null;
 
-	// statistics
-	// TODO
+  // statistics
+  self.totalBytes = 0;
 
 };
 
@@ -957,7 +956,7 @@ P2PTV.Peer.prototype = {
     }
 
     if (self.isParent) {
-      // on parent p2ptvchannel message
+      // on message from parent
       self.channel.onmessage = function(event) {
         var data = event.data;
         if (typeof data === 'string') {
@@ -967,7 +966,7 @@ P2PTV.Peer.prototype = {
         }
       };
     } else {
-      // on child p2ptvchannel message
+      // on message from child
       self.channel.onmessage = function(event) {
         var data = event.data;
         if (typeof data === 'string') {

@@ -23,16 +23,16 @@ P2PTV.Peer = function(client, id, relation) {
     throw new Error('Peer expects valid relation');
   }
 
-	// relationship
+  // relationship
   self.isParent = ('parent' === relation);
   self.isChild = !self.isParent;
 
-	// data channel
+  // data channel
   self.pc = null;
   self.channel = null;
 
-	// statistics
-	// TODO
+  // statistics
+  self.totalBytes = 0;
 
 };
 
@@ -74,7 +74,7 @@ P2PTV.Peer.prototype = {
     }
 
     if (self.isParent) {
-      // on parent p2ptvchannel message
+      // on message from parent
       self.channel.onmessage = function(event) {
         var data = event.data;
         if (typeof data === 'string') {
@@ -84,7 +84,7 @@ P2PTV.Peer.prototype = {
         }
       };
     } else {
-      // on child p2ptvchannel message
+      // on message from child
       self.channel.onmessage = function(event) {
         var data = event.data;
         if (typeof data === 'string') {
