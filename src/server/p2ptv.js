@@ -3,6 +3,7 @@
 var ws = require('ws'),
     Peer = require('./peer.js'),
     Gateway = require('./gateway.js'),
+    Network = require('./network.js'),
     debug = require('debug')('p2ptv');
 
 /**
@@ -30,7 +31,7 @@ function P2PTV(options) {
   // upstream port
   var upstream = options.upstream || 9001;
   if (typeof upstream !== 'number' || upstream < 1000) {
-    throw new Error('Media port must be an integer greater than 999 ('
+    throw new Error('Upstream port must be an integer greater than 999 ('
       + upstream + ')');
   }
   // gateway will push data at this rate
@@ -44,10 +45,21 @@ function P2PTV(options) {
     throw new Error('durations must be a boolean value (' + durations
       + ')');
   }
-  debug('options: signaling=' + signaling + ', upstream=' + upstream
-    + ', bitrate=' + bitrate + ', durations=' + durations);
+  // network architecture to use
+  var networkType = options.network || 'client-server';
+  if (typeof networkType !== 'string') {
+    throw new Error('Network type must be a string (' + networkType + ')');
+  }
+
+  debug('options: signaling=' + signaling
+    + ', upstream=' + upstream
+    + ', bitrate=' + bitrate
+    + ', durations=' + durations
+    + ', network=' + networkType);
 
   self.clients = {};
+
+  self.network = new Network(networkType);
 
   self.gateway = new Gateway({
     id: self._generateId(),
@@ -104,7 +116,7 @@ P2PTV.prototype._setupClientSession = function(connection) {
             id = self._generateId();
             self.clients[id] = new Peer(id, connection, browser);
             connection.send(JSON.stringify({'type': 'handle', 'id': id}));
-            debug('Client initialized: ' + ip + ':' + port + ' >>> ' + id);
+            debug('Client initialized: ' + ip + ':' + port + ' -> ' + id);
             self.gateway.connect(self.clients[id]);
             debug('Connecting ' + id + ' to gateway...');
           }

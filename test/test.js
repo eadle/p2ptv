@@ -1,12 +1,19 @@
 var P2PTV = require('../src/server/p2ptv.js'),
+    Network = require('../src/server/network.js'),
     Gateway = require('../src/server/gateway.js'),
     Peer = require('../src/server/peer.js'),
     PushPullWindow = require('../src/server/push-pull-window.js'),
     Encoder = require('../src/server/encoder.js'),
     assert = require('assert');
 
+// ../src/server/p2ptv.js tests
 describe('p2ptv', function() {
   describe('P2PTV', function() {
+    it('should throw for invalid network type', function() {
+      assert.throws(function() {
+        new P2PTV({network: 1235235});
+      }, /Network type/);
+    });
     it('should throw for invalid signaling port', function() {
       assert.throws(function() {
         new P2PTV({signaling: -1});
@@ -30,6 +37,18 @@ describe('p2ptv', function() {
   });
 });
 
+// ../src/server/network.js tests
+describe('network', function() {
+  describe('Network', function() {
+    it('should throw for invalid network type', function() {
+      assert.throws(function() {
+        new Network('mtreebone');
+      }, /Invalid network/);
+    });
+  });
+});
+
+// ../src/server/gateway.js tests
 describe('gateway', function() {
   describe('Gateway', function() {
     it('should throw for invalid id', function() {
@@ -55,6 +74,7 @@ describe('gateway', function() {
   });
 });
 
+// ../src/server/peer.js tests
 describe('peer', function() {
   describe('Peer', function() {
     it('should throw for invalid id', function() {
@@ -71,6 +91,7 @@ describe('peer', function() {
 });
 
 
+// ../src/server/push-pull-window.js tests
 describe('push-pull-window', function() {
   describe('PushPullWindow', function() {
     describe('#_pushInitSegment', function() {
@@ -95,6 +116,7 @@ describe('push-pull-window', function() {
   });
 });
 
+// ../src/server/encoder.js tests
 describe('encoder', function() {
   describe('Encoder', function() {
 
