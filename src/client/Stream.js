@@ -170,7 +170,7 @@ P2PTV.Stream.prototype = {
   },
 
   /**
-   * Initiate WebRTC connection handshake.
+   * Initiate WebRTC peer connection handshake.
    *
    * pid - peer id to connect to
    */
@@ -193,9 +193,9 @@ P2PTV.Stream.prototype = {
   },
 
   /**
-   * TODO fill this out
+   * Send SDP offer to peer.
    *
-   * peer -
+   * peer - peer to send offer to
    */
   _makeOffer: function(peer) {
     var self = this;
@@ -215,9 +215,9 @@ P2PTV.Stream.prototype = {
   },
 
   /**
-   * TODO fill this out
+   * Send SDP answer to peer.
    *
-   * peer -
+   * peer - peer to send answer to
    */
   _makeAnswer: function(peer) {
     var self = this;
@@ -235,10 +235,10 @@ P2PTV.Stream.prototype = {
   },
 
   /**
-   * TODO fill ths out
+   * Handle SDP offer from peer.
    *
-   * offer -
-   * peer -
+   * offer - sdp offer
+   * peer - the peer who sent the offer
    */
   _handleOffer: function(offer, peer) {
     var self = this;
@@ -250,10 +250,10 @@ P2PTV.Stream.prototype = {
   },
 
   /**
-   * TODO fill this out
+   * Handle SDP answer from peer.
    *
-   * answer -
-   * peer -
+   * answer - sdp answer
+   * peer - the peer who sent the answer
    */
   _handleAnswer: function(answer, peer) {
     var self = this;
@@ -277,7 +277,7 @@ P2PTV.Stream.prototype = {
     }, self._traceErr);
   },
   
-  /** TODO fill this out */
+  /** Log error info. */
   _traceErr: function(err) {
     P2PTV.log(err);
   },
