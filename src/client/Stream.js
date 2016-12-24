@@ -152,14 +152,13 @@ P2PTV.Stream.prototype = {
   },
 
   /**
-   * TODO fill this out
+   * Push stream data into push-pull-window and pass data to children.
    *
-   * data -
+   * data - initialization or media segment data
    */
   _pushData: function(data) {
     var self = this;
 
-    // FIXME data should be emitted from window to other peers
     self._pushPullWindow.pushData(data);
 
     // broadcast data to children
@@ -171,11 +170,11 @@ P2PTV.Stream.prototype = {
   },
 
   /**
-   * TODO fill this out
+   * Initiate WebRTC connection handshake.
    *
-   * peer -
+   * pid - peer id to connect to
    */
-  _setupPeerConnection: function(peer) {
+  _setupPeerConnection: function(pid) {
     var self = this;
     var peer = new Peer(self, pid, relation);
     peer.pc = new P2PTV.RTCPeerConnection(P2PTV.ICE_SERVERS,
