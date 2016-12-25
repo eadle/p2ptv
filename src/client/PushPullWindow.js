@@ -3,13 +3,8 @@
  * TODO write description
  * stream -
  */
-P2PTV.PushPullWindow = function(stream, player) {
+P2PTV.PushPullWindow = function(player) {
   var self = this;
-
-  self._stream = stream;
-  if (!self._stream) {
-    throw new Error('Must pass Stream reference to PushPullWindow');
-  }
 
   self._player = player;
   if (!self._player) {
@@ -18,6 +13,7 @@ P2PTV.PushPullWindow = function(stream, player) {
 
   self._key = null;
   self._stream = {};
+  self._window = [];
 
 };
 
@@ -82,7 +78,8 @@ P2PTV.PushPullWindow.prototype = {
   },
 
   /**
-   * TODO fill this out
+   * Push decoded initialization segment into window.
+   *
    * initSegment - The decoded initialization segment message.
    */
   _pushInitSegment: function(initSegment) {
@@ -95,20 +92,30 @@ P2PTV.PushPullWindow.prototype = {
       timecodeQueue: []
     };
 
+    // pass initialization segment to media player
     self._player.appendInitSegment(
       initSegment.data.slice(initSegment.start)
     );
+
+    // TODO push initialization segment to children
+    // ...
+
   },
 
   /**
    * TODO fill this out
+   *
    * chunk - The decoded media segment chunk message.
+   *
+   * preconditions - chunks may be received out of order
+   *               - chunks may be from different media segments
    */
   _pushMediaSegmentChunk: function(chunk) {
     var self = this;
     
     var stream = self._stream[self._key];
     var mediaSegment = null;
+    
 
     if (!(chunk.timecode in stream.mediaSegmentHash)) {
       mediaSegment = new P2PTV.MediaSegment(chunk);
@@ -124,7 +131,22 @@ P2PTV.PushPullWindow.prototype = {
         mediaSegment.getBlob(),
         chunk.timecode
       );
+      // push media segment key into free queue
+      self._window.push({
+        key: self._key,
+        timecode: chunk.timecode
+      });
+      // make sure window length stays within limit
+      if (P2PTV.MAX_WINDOW_LENGTH <= self._window.length) {
+        var key = self._window[0].key;
+        var timecode = self._window[0].timecode;
+        self._stream[key].mediaSegmentHash[timecode] = null;
+        self._window.shift();
+      }
     }
+
+    // TODO push media segment chunk to children
+    // ...
 
   },
   
