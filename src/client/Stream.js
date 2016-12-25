@@ -60,7 +60,7 @@ P2PTV.Stream.prototype = {
 
     self._ws.onclose = function() {
       // FIXME should we attempt to reconnect?
-      P2PTV.log('disconnected to server');
+      P2PTV.log('disconnected from server');
     };
 
     self._ws.onmessage = function(event) {
