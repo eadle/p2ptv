@@ -2,7 +2,7 @@
 
 var P2PTV = P2PTV || {
 
-  VERSION: 'v0.5.0',
+  VERSION: 'v0.5.1',
 
   CHANNEL: 'p2ptvchannel',
   ICE_SERVERS: [{url: 'stun:stun.l.google.com:19302'}],

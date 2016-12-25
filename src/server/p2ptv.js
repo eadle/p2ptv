@@ -59,8 +59,6 @@ function P2PTV(options) {
 
   self.clients = {};
 
-  self.network = new Network(networkType);
-
   self.gateway = new Gateway({
     id: self._generateId(),
     port: upstream,
@@ -68,10 +66,11 @@ function P2PTV(options) {
     durations: durations
   });
 
-  self.wss = new ws.Server({
-    port: signaling
-  });
+  // new distribution network -- default client-server architecture
+  self.network = new Network(networkType, self.gateway);
 
+  // setup signaling server
+  self.wss = new ws.Server({port: signaling});
   self.wss.on('connection', function(connection) {
     self._setupClientSession(connection);
   });

@@ -2,7 +2,7 @@
 
 var P2PTV = P2PTV || {
 
-  VERSION: 'v0.5.0',
+  VERSION: 'v0.5.1',
 
   CHANNEL: 'p2ptvchannel',
   ICE_SERVERS: [{url: 'stun:stun.l.google.com:19302'}],
@@ -297,7 +297,7 @@ P2PTV.Stream.prototype = {
 
     self._ws.onclose = function() {
       // FIXME should we attempt to reconnect?
-      P2PTV.log('disconnected to server');
+      P2PTV.log('disconnected from server');
     };
 
     self._ws.onmessage = function(event) {
@@ -581,7 +581,7 @@ P2PTV.MediaPlayer = function(id, options) {
         var oldStream = self._streamQueue.shift();
         oldStream.mediaSource.endOfStream();
       } else if (self._streamCanAppend(stream)) {
-        stream.appending = true;
+        stream.busy = true;
         var mediaSegment = stream.mediaSegmentQueue.shift();
         stream.sourceBuffer.timestampOffset = mediaSegment.timestampOffset;
         stream.reader.readAsArrayBuffer(mediaSegment.data);
@@ -597,7 +597,7 @@ P2PTV.MediaPlayer.prototype = {
 
   /** Returns true if a stream should append to the source buffer. */
   _streamCanAppend: function(stream) {
-    return !stream.appending && !stream.sourceBuffer.updating
+    return !stream.busy && !stream.sourceBuffer.updating
       && (stream.mediaSegmentQueue.length > 0);
   },
 
@@ -613,14 +613,37 @@ P2PTV.MediaPlayer.prototype = {
     var self = this;
 
     stream.mediaSource.addEventListener('sourceopen', function(event) {
+
       // P2PTV.log('MediaSource event: sourceopen');
       var type = 'video/webm; codecs="vorbis,vp8"';
-
       stream.sourceBuffer = stream.mediaSource.addSourceBuffer(type);
 
       stream.sourceBuffer.addEventListener('updateend', function() {
-        // P2PTV.log('SourceBuffer event: updateend');
-        stream.appending = false;
+        // check whether we should remove some of the buffered video
+        if (stream.sourceBuffer.buffered.length > 0 && stream.timestampQueue.length > 0) {
+          var bufferedIndex = stream.sourceBuffer.buffered.length - 1; // TODO figure out how the hell buffered works
+          var start = stream.sourceBuffer.buffered.start(bufferedIndex),
+              end = stream.sourceBuffer.buffered.end(bufferedIndex),
+              duration = end - start,
+              currentTime = self._video.currentTime;
+          // log buffered range and current time          
+          P2PTV.log('buffered.length: ' + stream.sourceBuffer.buffered.length + '; buffered range: [' + start + ',' + end + ']; currentTime: ' + currentTime);
+
+          // get the largest timestamp less than currentTime
+          var timestamp = start;
+          while (stream.timestampQueue[0] < currentTime) {
+            timestamp = stream.timestampQueue.shift();
+          }
+          // remove buffer chunk if possible
+          if (start < timestamp) {
+            P2PTV.log('removing range: [' + start + ',' + timestamp + ']');
+            stream.sourceBuffer.remove(start, timestamp);
+          } else {
+            stream.busy = false;
+          }
+        } else {
+          stream.busy = false;
+        }
       }, false);
 
       stream.sourceBuffer.appendBuffer(stream.initSegment);
@@ -833,12 +856,13 @@ P2PTV.MediaPlayer.prototype = {
     }
 
     var stream = {
-      active: false,
-      appending: true,
-      complete: false,
-      stalled: false,
+      active: false,         // currently playing this stream
+      busy: true,            // appending or removing -- DON'T TRUST sourceBuffer.updating
+      complete: false,       // FIXME stream is completed?
+      stalled: false,        // FIXME stream is stalled?
       initSegment: data,     // stores ArrayBuffer
       mediaSegmentQueue: [], // stores Blob and timestampOffset
+      timestampQueue: [],    // need to store seperately for buffer removal
       initialTimecode: -1,   // initial media segment timecode unknown
       sourceBuffer: null,
       mediaSource: new MediaSource(),
@@ -861,15 +885,20 @@ P2PTV.MediaPlayer.prototype = {
     P2PTV.log('appending media segment: timecode=' + timecode
      + ', length=' + data.size + ' bytes');
 
-    var stream = self._streamQueue[self._streamQueue.length - 1];
+    var stream = self._streamQueue[self._streamQueue.length-1];
 
+    // first media segment if initialTimecode < 0
     if (stream.initialTimecode < 0) {
       stream.initialTimecode = timecode;
     }
 
-    timecode = timecode | 0;
+    timecode = timecode | 0; // FIXME should this be above the conditional?
     var timestampOffset = (timecode - stream.initialTimecode)/1000;
 
+    // shifted when removing from sourcebuffer
+    stream.timestampQueue.push(timestampOffset);
+
+    // shifted when appending to sourcebuffer
     stream.mediaSegmentQueue.push({
       timestampOffset: timestampOffset,
       data: data
