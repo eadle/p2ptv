@@ -21,8 +21,8 @@ var debug = require('debug')('encoder');
  *
  * Media Segment chunk message:
  * ----------------------------
- * TIMECODE (8 bytes): The timecode at which the associated Media Segment
- *                     was generated. Number of milliseconds since epoch.
+ * TIMECODE (8 bytes): The timestamp associated with the current media
+ *                     segment.
  * TYPE (2 bits): A Media Segment chunk is given type 1.
  * RESERVED (3 bits): Reserved for future use.
  * PADDING LENGTH (3 bits): The number of padding bytes to follow.

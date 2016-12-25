@@ -35,16 +35,13 @@ function PushPullWindow(options) {
     clearTimecodes: true
   });
 
-  var lastTime = new Date().getTime();
-
   self._webmstream.on('Initialization Segment', function(data) {
+    var lastTime = new Date().getTime();
     self._pushInitSegment(data, lastTime); // TODO
   });
 
   self._webmstream.on('Media Segment', function(data) {
-    //lastTime = new Date().getTime();
-    lastTime = data.timecode;
-    self._pushMediaSegment(data, lastTime);
+    self._pushMediaSegment(data, data.timecode);
   });
 
 }
@@ -60,7 +57,7 @@ PushPullWindow.prototype._write = function(data, enc, done) {
  * Push an Initialization Segment into the distribution network.
  *
  * data - Buffer storing the Initialization Segment data.
- * timecode - The time at which the Initialization Segment was generated.
+ * timecode - The time (epoch) at which the Initialization Segment was generated.
  */
 PushPullWindow.prototype._pushInitSegment = function(data, timecode) {
   var self = this;
@@ -90,7 +87,7 @@ PushPullWindow.prototype._pushInitSegment = function(data, timecode) {
  * subdivided and distributed as sequential chunks.
  *
  * data - Buffer storing the Media Segment data.
- * timecode - The time at which the Media Segment was generated.
+ * timecode - The timestamp of the current Media Segment.
  */
 PushPullWindow.prototype._pushMediaSegment = function(data, timecode) {
   var self = this;
