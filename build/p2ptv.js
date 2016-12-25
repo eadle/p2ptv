@@ -2,7 +2,7 @@
 
 var P2PTV = P2PTV || {
 
-  VERSION: 'v0.5.1',
+  VERSION: 'v0.5.2',
 
   CHANNEL: 'p2ptvchannel',
   ICE_SERVERS: [{url: 'stun:stun.l.google.com:19302'}],
@@ -24,6 +24,7 @@ var P2PTV = P2PTV || {
 
   MEDIA_SEGMENT: 2,
   MIN_MEDIA_SEGMENT_HEADER: 9,
+  MAX_WINDOW_LENGTH: 4,
 
   STREAMS: {},
 
@@ -262,7 +263,7 @@ P2PTV.Stream = function(options) {
   self._parents = {};
   self._children = {};
   self._player = new P2PTV.MediaPlayer(self._streamId, options);
-  self._pushPullWindow = new P2PTV.PushPullWindow(self, self._player);
+  self._pushPullWindow = new P2PTV.PushPullWindow(self._player);
   self._ws = null;
 
   self._initialized = false;
@@ -1037,9 +1038,9 @@ P2PTV.InitSegment.prototype = {
 P2PTV.InitSegment.prototype.constructor = P2PTV.InitSegment;
 
 /**
- * TODO write description
+ * Create a MediaSegment container.
  *
- * chunk -
+ * chunk - The first media segment chunk received.
  */
 P2PTV.MediaSegment = function(chunk) {
   var self = this;
@@ -1101,7 +1102,6 @@ P2PTV.MediaSegment.prototype = {
    * Should be called before deleting this object.
    */
   destroy: function() {
-    // TODO
   },
 };
 
@@ -1111,13 +1111,8 @@ P2PTV.MediaSegment.prototype.constructor = P2PTV.MediaSegment;
  * TODO write description
  * stream -
  */
-P2PTV.PushPullWindow = function(stream, player) {
+P2PTV.PushPullWindow = function(player) {
   var self = this;
-
-  self._stream = stream;
-  if (!self._stream) {
-    throw new Error('Must pass Stream reference to PushPullWindow');
-  }
 
   self._player = player;
   if (!self._player) {
@@ -1126,6 +1121,7 @@ P2PTV.PushPullWindow = function(stream, player) {
 
   self._key = null;
   self._stream = {};
+  self._window = [];
 
 };
 
@@ -1190,7 +1186,8 @@ P2PTV.PushPullWindow.prototype = {
   },
 
   /**
-   * TODO fill this out
+   * Push decoded initialization segment into window.
+   *
    * initSegment - The decoded initialization segment message.
    */
   _pushInitSegment: function(initSegment) {
@@ -1203,20 +1200,30 @@ P2PTV.PushPullWindow.prototype = {
       timecodeQueue: []
     };
 
+    // pass initialization segment to media player
     self._player.appendInitSegment(
       initSegment.data.slice(initSegment.start)
     );
+
+    // TODO push initialization segment to children
+    // ...
+
   },
 
   /**
    * TODO fill this out
+   *
    * chunk - The decoded media segment chunk message.
+   *
+   * preconditions - chunks may be received out of order
+   *               - chunks may be from different media segments
    */
   _pushMediaSegmentChunk: function(chunk) {
     var self = this;
     
     var stream = self._stream[self._key];
     var mediaSegment = null;
+    
 
     if (!(chunk.timecode in stream.mediaSegmentHash)) {
       mediaSegment = new P2PTV.MediaSegment(chunk);
@@ -1232,7 +1239,22 @@ P2PTV.PushPullWindow.prototype = {
         mediaSegment.getBlob(),
         chunk.timecode
       );
+      // push media segment key into free queue
+      self._window.push({
+        key: self._key,
+        timecode: chunk.timecode
+      });
+      // make sure window length stays within limit
+      if (P2PTV.MAX_WINDOW_LENGTH <= self._window.length) {
+        var key = self._window[0].key;
+        var timecode = self._window[0].timecode;
+        self._stream[key].mediaSegmentHash[timecode] = null;
+        self._window.shift();
+      }
     }
+
+    // TODO push media segment chunk to children
+    // ...
 
   },
   

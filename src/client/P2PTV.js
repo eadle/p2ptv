@@ -2,7 +2,7 @@
 
 var P2PTV = P2PTV || {
 
-  VERSION: 'v0.5.1',
+  VERSION: 'v0.5.2',
 
   CHANNEL: 'p2ptvchannel',
   ICE_SERVERS: [{url: 'stun:stun.l.google.com:19302'}],
@@ -24,6 +24,7 @@ var P2PTV = P2PTV || {
 
   MEDIA_SEGMENT: 2,
   MIN_MEDIA_SEGMENT_HEADER: 9,
+  MAX_WINDOW_LENGTH: 4,
 
   STREAMS: {},
 

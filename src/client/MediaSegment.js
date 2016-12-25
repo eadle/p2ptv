@@ -1,8 +1,8 @@
 
 /**
- * TODO write description
+ * Create a MediaSegment container.
  *
- * chunk -
+ * chunk - The first media segment chunk received.
  */
 P2PTV.MediaSegment = function(chunk) {
   var self = this;
@@ -64,7 +64,6 @@ P2PTV.MediaSegment.prototype = {
    * Should be called before deleting this object.
    */
   destroy: function() {
-    // TODO
   },
 };
 
